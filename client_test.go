@@ -43,9 +43,7 @@ func plainClient(t *testing.T, exH *extraHandler) Client {
 	)
 
 	if err != nil {
-		t.Log(err)
-		t.Log("create client failed")
-		t.FailNow()
+		t.Error(err)
 	}
 	initClient(c, exH, t)
 	return c
@@ -68,9 +66,7 @@ func tlsClient(t *testing.T, exH *extraHandler) Client {
 	)
 
 	if err != nil {
-		t.Log(err)
-		t.Log("create client failed")
-		t.FailNow()
+		t.Error(err)
 	}
 	initClient(c, exH, t)
 	return c

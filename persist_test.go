@@ -83,8 +83,7 @@ func TestFilePersist(t *testing.T) {
 	dirPath := "test-file-persist"
 	err := os.MkdirAll(dirPath, 0755)
 	if err != nil {
-		t.Log(err)
-		t.Error()
+		t.Error(err)
 	}
 
 	p := NewFilePersist(dirPath, testPersistStrategy)
@@ -92,8 +91,7 @@ func TestFilePersist(t *testing.T) {
 	for i, k := range testPersistKeys {
 		if err := p.Store(k, testPersistPackets[i]); err != nil {
 			if err != PacketDroppedByStrategy {
-				t.Log(err)
-				t.Error()
+				t.Error(err)
 			}
 		}
 	}

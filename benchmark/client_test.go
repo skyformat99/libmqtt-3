@@ -65,17 +65,14 @@ func BenchmarkLibmqttClient(b *testing.B) {
 		lib.WithRecvBuf(testBufSize),
 		lib.WithSendBuf(testBufSize),
 		lib.WithCleanSession(true)); err != nil {
-		b.Log(err)
-		b.FailNow()
+		b.Error(err)
 	}
 
 	client.Connect(func(server string, code lib.ConnAckCode, err error) {
 		if err != nil {
-			b.Log(err)
-			b.FailNow()
+			b.Error(err)
 		} else if code != lib.ConnAccepted {
-			b.Log(code)
-			b.FailNow()
+			b.Error(code)
 		}
 
 		b.ResetTimer()
@@ -87,7 +84,7 @@ func BenchmarkLibmqttClient(b *testing.B) {
 			})
 		}
 		client.UnSubscribe(testTopic)
-		client.Destroy(true)
+		client.Destroy(false)
 	})
 	client.Wait()
 }
@@ -98,8 +95,7 @@ func BenchmarkPahoClient(b *testing.B) {
 
 	serverURL, err := url.Parse("tcp://" + testServer)
 	if err != nil {
-		b.Log(err)
-		b.FailNow()
+		b.Error(err)
 	}
 
 	client := pah.NewClient(&pah.ClientOptions{
@@ -115,12 +111,11 @@ func BenchmarkPahoClient(b *testing.B) {
 
 	t := client.Connect()
 	if !t.Wait() {
-		b.FailNow()
+		b.Fail()
 	}
 
 	if err := t.Error(); err != nil {
-		b.Log(err)
-		b.FailNow()
+		b.Error(err)
 	}
 
 	b.ResetTimer()
@@ -129,11 +124,10 @@ func BenchmarkPahoClient(b *testing.B) {
 	}
 	t = client.Unsubscribe(testTopic)
 	if !t.Wait() {
-		b.FailNow()
+		b.Fail()
 	}
 	if err := t.Error(); err != nil {
-		b.Log(err)
-		b.FailNow()
+		b.Error(err)
 	}
 
 	client.Disconnect(0)
@@ -145,8 +139,7 @@ func BenchmarkGmqClient(b *testing.B) {
 
 	client := gmq.New(&gmq.Options{ErrorHandler: func(e error) {
 		if e != nil {
-			b.Log(e)
-			b.FailNow()
+			b.Error(e)
 		}
 	}})
 	if err := client.Connect(&gmq.ConnectOptions{
@@ -157,8 +150,7 @@ func BenchmarkGmqClient(b *testing.B) {
 		KeepAlive:    testKeepalive,
 		CleanSession: true,
 	}); err != nil {
-		b.Log(err)
-		b.FailNow()
+		b.Error(err)
 	}
 
 	b.ResetTimer()
@@ -169,15 +161,13 @@ func BenchmarkGmqClient(b *testing.B) {
 			TopicName: []byte(testTopic),
 			Message:   testTopicMsg,
 		}); err != nil {
-			b.Log(err)
-			b.FailNow()
+			b.Error(err)
 		}
 	}
 	if err := client.Unsubscribe(&gmq.UnsubscribeOptions{
 		TopicFilters: [][]byte{[]byte(testTopic)},
 	}); err != nil {
-		b.Log(err)
-		b.FailNow()
+		b.Error(err)
 	}
 
 	client.Terminate()

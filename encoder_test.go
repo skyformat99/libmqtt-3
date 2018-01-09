@@ -28,8 +28,7 @@ func TestEncodeRemainLength(t *testing.T) {
 		writeRemainLength(i, buf)
 		result := buf.Bytes()
 		if len(result) != 1 {
-			t.Log("fail at level 1 target:", i, ", result:", result)
-			t.Fail()
+			t.Error("fail at level 1 target:", i, ", result:", result)
 		}
 		buf.Reset()
 	}
@@ -38,8 +37,7 @@ func TestEncodeRemainLength(t *testing.T) {
 		writeRemainLength(i, buf)
 		result := buf.Bytes()
 		if len(result) != 2 {
-			t.Log("fail at level 2 target:", i, ", result:", result)
-			t.Fail()
+			t.Error("fail at level 2 target:", i, ", result:", result)
 		}
 		buf.Reset()
 	}
@@ -48,8 +46,7 @@ func TestEncodeRemainLength(t *testing.T) {
 		writeRemainLength(i, buf)
 		result := buf.Bytes()
 		if len(result) != 3 {
-			t.Log("fail at level 3 target:", i, ", result:", result)
-			t.Fail()
+			t.Error("fail at level 3 target:", i, ", result:", result)
 		}
 		buf.Reset()
 	}
@@ -58,8 +55,7 @@ func TestEncodeRemainLength(t *testing.T) {
 		writeRemainLength(i, buf)
 		result := buf.Bytes()
 		if len(result) != 4 {
-			t.Log("fail at level 4 target:", i, ", result:", result)
-			t.Fail()
+			t.Error("fail at level 4 target:", i, ", result:", result)
 		}
 		buf.Reset()
 	}
