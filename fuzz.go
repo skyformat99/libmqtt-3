@@ -23,7 +23,7 @@ import (
 )
 
 func Fuzz(data []byte) int {
-	pkt, err := DecodeOnePacket(bytes.NewReader(data))
+	pkt, err := DecodeOnePacket(V311, bytes.NewReader(data))
 	if err != nil {
 		if pkt != nil {
 			panic("pkt != nil on error")

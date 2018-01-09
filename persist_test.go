@@ -45,20 +45,17 @@ var (
 
 func testPersist(p PersistMethod, t *testing.T) {
 	if _, ok := p.Load(testPersistKeys[len(testPersistKeys)-1]); ok {
-		t.Log("persist strategy failed")
-		t.Fail()
+		t.Error("persist strategy failed")
 	}
 
 	if v, ok := p.Load(testPersistKeys[0]); !ok {
-		t.Log("load persisted packet fail, packet =", v)
-		t.Fail()
+		t.Error("load persisted packet fail, packet =", v)
 	} else {
 		if v.Type() == CtrlSubscribe {
 			if v.(*SubscribePacket).Topics[0].Name !=
 				testPersistPackets[0].(*SubscribePacket).Topics[0].Name {
-				t.Log("source topic name =", v.(*SubscribePacket).Topics[0].Name)
-				t.Log("target topic name =", testPersistPackets[0].(*SubscribePacket).Topics[0].Name)
-				t.Fail()
+				t.Error("source topic name =", v.(*SubscribePacket).Topics[0].Name,
+					"target topic name =", testPersistPackets[0].(*SubscribePacket).Topics[0].Name)
 			}
 		}
 	}
@@ -70,15 +67,13 @@ func TestMemPersist(t *testing.T) {
 	for i, k := range testPersistKeys {
 		if err := p.Store(k, testPersistPackets[i]); err != nil {
 			if err != PacketDroppedByStrategy {
-				t.Log(err)
-				t.Fail()
+				t.Error(err)
 			}
 		}
 	}
 
 	if p.n != 1 {
-		t.Log("persist strategy failed, count =", p.n)
-		t.Fail()
+		t.Error("persist strategy failed, count =", p.n)
 	}
 
 	testPersist(p, t)
@@ -89,7 +84,7 @@ func TestFilePersist(t *testing.T) {
 	err := os.MkdirAll(dirPath, 0755)
 	if err != nil {
 		t.Log(err)
-		t.Fail()
+		t.Error()
 	}
 
 	p := NewFilePersist(dirPath, testPersistStrategy)
@@ -98,32 +93,30 @@ func TestFilePersist(t *testing.T) {
 		if err := p.Store(k, testPersistPackets[i]); err != nil {
 			if err != PacketDroppedByStrategy {
 				t.Log(err)
-				t.Fail()
+				t.Error()
 			}
 		}
 	}
 
 	if p.n == 1 {
-		t.Fail()
+		t.Error()
 	}
 
 	<-time.After(750 * time.Millisecond)
 
 	if p.n == 1 {
-		t.Fail()
+		t.Error()
 	}
 
 	<-time.After(750 * time.Millisecond)
 
 	if p.n != 1 {
-		t.Log("persist strategy failed, count =", p.n)
-		t.Fail()
+		t.Error("persist strategy failed, count =", p.n)
 	}
 
 	testPersist(p, t)
 	err = os.RemoveAll(dirPath)
 	if err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Error(err)
 	}
 }

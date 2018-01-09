@@ -210,7 +210,8 @@ func WithLog(l LogLevel) Option {
 	}
 }
 
-func withProtoVersion(version ProtocolVersion, compromise bool) Option {
+// WithVersion defines the mqtt protocol version to
+func withVersion(version ProtocolVersion, compromise bool) Option {
 	return func(c *client) error {
 		c.options.protoVersion = version
 		c.options.protoCompromise = compromise
@@ -218,7 +219,7 @@ func withProtoVersion(version ProtocolVersion, compromise bool) Option {
 	}
 }
 
-// NewClient will create a new mqtt client
+// NewClient create a new mqtt client
 func NewClient(options ...Option) (Client, error) {
 	c := defaultClient()
 
@@ -233,36 +234,10 @@ func NewClient(options ...Option) (Client, error) {
 		return nil, errors.New("no server provided, won't work ")
 	}
 
-	c.msgC = make(chan *message)
 	c.sendC = make(chan Packet, c.options.sendChanSize)
 	c.recvC = make(chan *PublishPacket, c.options.recvChanSize)
 
 	return c, nil
-}
-
-// clientOptions is the options for client to connect, reconnect, disconnect
-type clientOptions struct {
-	protoVersion    ProtocolVersion // mqtt protocol version
-	protoCompromise bool            // compromise to server protocol version
-	sendChanSize    int             // send channel size
-	recvChanSize    int             // recv channel size
-	servers         []string        // server address strings
-	dialTimeout     time.Duration   // dial timeout in second
-	clientID        string          // used by ConnPacket
-	username        string          // used by ConnPacket
-	password        string          // used by ConnPacket
-	keepalive       time.Duration   // used by ConnPacket (time in second)
-	keepaliveFactor float64         // used for reasonable amount time to close conn if no ping resp
-	cleanSession    bool            // used by ConnPacket
-	isWill          bool            // used by ConnPacket
-	willTopic       string          // used by ConnPacket
-	willPayload     []byte          // used by ConnPacket
-	willQos         byte            // used by ConnPacket
-	willRetain      bool            // used by ConnPacket
-	tlsConfig       *tls.Config     // tls config with client side cert
-	maxDelay        time.Duration
-	firstDelay      time.Duration
-	backoffFactor   float64
 }
 
 // Client act as a mqtt client
@@ -297,13 +272,13 @@ type Client interface {
 	HandlePersist(PersistHandler)
 }
 
+// mqtt client implementation
 type client struct {
 	options *clientOptions      // client connection options
-	subs    *sync.Map           // Topic(s) -> []TopicHandler
-	conn    *sync.Map           // ServerAddr -> connection
 	msgC    chan *message       // error channel
 	sendC   chan Packet         // Pub channel for sending publish packet to server
 	recvC   chan *PublishPacket // recv channel for server pub receiving
+	exit    chan int            // closure of this channel will signal all client worker to stop
 	idGen   *idGenerator        // Packet id generator
 	router  TopicRouter         // Topic router
 	persist PersistMethod       // Persist method
@@ -315,6 +290,31 @@ type client struct {
 	uH  UnSubHandler
 	nH  NetHandler
 	psH PersistHandler
+}
+
+// clientOptions is the options for client to connect, reconnect, disconnect
+type clientOptions struct {
+	protoVersion    ProtocolVersion // mqtt protocol version
+	protoCompromise bool            // compromise to server protocol version
+	sendChanSize    int             // send channel size
+	recvChanSize    int             // recv channel size
+	servers         []string        // server address strings
+	dialTimeout     time.Duration   // dial timeout in second
+	clientID        string          // used by ConnPacket
+	username        string          // used by ConnPacket
+	password        string          // used by ConnPacket
+	keepalive       time.Duration   // used by ConnPacket (time in second)
+	keepaliveFactor float64         // used for reasonable amount time to close conns if no ping resp
+	cleanSession    bool            // used by ConnPacket
+	isWill          bool            // used by ConnPacket
+	willTopic       string          // used by ConnPacket
+	willPayload     []byte          // used by ConnPacket
+	willQos         byte            // used by ConnPacket
+	willRetain      bool            // used by ConnPacket
+	tlsConfig       *tls.Config     // tls config with client side cert
+	maxDelay        time.Duration
+	firstDelay      time.Duration
+	backoffFactor   float64
 }
 
 // defaultClient create the client with default options
@@ -331,9 +331,9 @@ func defaultClient() *client {
 			keepaliveFactor: 1.5,              // default reasonable amount of time 3min
 			protoVersion:    V311,             // default protocol version is MQTT 3.1.1
 		},
+		msgC:    make(chan *message),
+		exit:    make(chan int),
 		router:  NewTextRouter(),
-		subs:    &sync.Map{},
-		conn:    &sync.Map{},
 		idGen:   newIDGenerator(),
 		workers: &sync.WaitGroup{},
 		persist: NonePersist,
@@ -343,7 +343,7 @@ func defaultClient() *client {
 // Handle register subscription message route
 func (c *client) Handle(topic string, h TopicHandler) {
 	if h != nil {
-		lg.d("HANDLE registered handler, topic =", topic)
+		lg.d("HANDLE registered topic handler, topic =", topic)
 		c.router.Handle(topic, h)
 	}
 }
@@ -351,38 +351,10 @@ func (c *client) Handle(topic string, h TopicHandler) {
 // Connect to all designated server
 func (c *client) Connect(h ConnHandler) {
 	lg.d("CLIENT connect to server, handler =", h)
-	go func() {
-		for pkt := range c.recvC {
-			c.router.Dispatch(pkt)
-		}
-	}()
 
-	go func() {
-		for m := range c.msgC {
-			switch m.what {
-			case pubMsg:
-				if c.pH != nil {
-					go c.pH(m.msg, m.err)
-				}
-			case subMsg:
-				if c.sH != nil {
-					go c.sH(m.obj.([]*Topic), m.err)
-				}
-			case unSubMsg:
-				if c.uH != nil {
-					go c.uH(m.obj.([]string), m.err)
-				}
-			case netMsg:
-				if c.nH != nil {
-					go c.nH(m.msg, m.err)
-				}
-			case persistMsg:
-				if c.psH != nil {
-					go c.psH(m.err)
-				}
-			}
-		}
-	}()
+	c.workers.Add(2)
+	go c.handleTopicMsg()
+	go c.handleMsg()
 
 	for _, s := range c.options.servers {
 		c.workers.Add(1)
@@ -392,71 +364,68 @@ func (c *client) Connect(h ConnHandler) {
 
 // Publish message(s) to topic(s), one to one
 func (c *client) Publish(msg ...*PublishPacket) {
-	for _, m := range msg {
-		if m == nil {
-			continue
-		}
-
-		p := m
-		if p.Qos > Qos2 {
-			p.Qos = Qos2
-		}
-
-		if p.Qos != Qos0 && p.PacketID == 0 {
-			p.PacketID = c.idGen.next(p)
-			if err := c.persist.Store(sendKey(p.PacketID), p); err != nil {
-				c.msgC <- newPersistMsg(err)
+	if !c.isClosing() {
+		for _, m := range msg {
+			if m == nil {
+				continue
 			}
+
+			p := m
+			if p.Qos > Qos2 {
+				p.Qos = Qos2
+			}
+
+			if p.Qos != Qos0 {
+				if p.PacketID == 0 {
+					p.PacketID = c.idGen.next(p)
+					if err := c.persist.Store(sendKey(p.PacketID), p); err != nil {
+						c.msgC <- newPersistMsg(err)
+					}
+				}
+			}
+			c.sendC <- p
 		}
-		c.sendC <- p
 	}
 }
 
 // SubScribe topic(s)
 func (c *client) Subscribe(topics ...*Topic) {
-	lg.d("CLIENT subscribe, topic(s) =", topics)
-	s := &SubscribePacket{Topics: topics}
-	s.PacketID = c.idGen.next(s)
-	c.sendC <- s
+	if !c.isClosing() {
+		lg.d("CLIENT subscribe, topic(s) =", topics)
+		s := &SubscribePacket{Topics: topics}
+		s.PacketID = c.idGen.next(s)
+		c.sendC <- s
+	}
 }
 
 // UnSubscribe topic(s)
 func (c *client) UnSubscribe(topics ...string) {
-	lg.d("CLIENT unsubscribe topic(s) =", topics)
-	for _, t := range topics {
-		c.subs.Delete(t)
+	if !c.isClosing() {
+		lg.d("CLIENT unsubscribe topic(s) =", topics)
+		u := &UnSubPacket{
+			TopicNames: topics,
+		}
+		u.PacketID = c.idGen.next(u)
+		c.sendC <- u
 	}
-	u := &UnSubPacket{
-		TopicNames: topics,
-	}
-	u.PacketID = c.idGen.next(u)
-	c.sendC <- u
 }
 
 // Wait will wait for all connection to exit
 func (c *client) Wait() {
-	lg.i("CLIENT wait for all connections")
-	c.workers.Wait()
+	if !c.isClosing() {
+		lg.i("CLIENT wait for all workers")
+		c.workers.Wait()
+	}
 }
 
 // Destroy will disconnect form all server
 // If force is true, then close connection without sending a DisConnPacket
 func (c *client) Destroy(force bool) {
 	lg.d("CLIENT destroying client with force =", force)
-	// TODO close all channel properly
-	c.options.backoffFactor = -1
 	if force {
-		c.conn.Range(func(k, v interface{}) bool {
-			va := v.(*clientConn)
-			va.conn.Close()
-			return true
-		})
+		close(c.exit)
 	} else {
-		c.conn.Range(func(k, v interface{}) bool {
-			va := v.(*clientConn)
-			va.close()
-			return true
-		})
+		c.sendC <- DisConnPacket
 	}
 }
 
@@ -492,7 +461,6 @@ func (c *client) HandlePersist(h PersistHandler) {
 
 // connect to one server and start mqtt logic
 func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Duration) {
-	defer c.workers.Done()
 	var conn net.Conn
 	var err error
 
@@ -518,6 +486,11 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 		}
 	}
 
+	if c.isClosing() {
+		conn.Close()
+		return
+	}
+
 	connImpl := &clientConn{
 		parent:     c,
 		name:       server,
@@ -528,9 +501,9 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 		netRecvC:   make(chan Packet),
 	}
 
-	go connImpl.handleLogicSend()
+	c.workers.Add(2)
+	go connImpl.handleSend()
 	go connImpl.handleRecv()
-	go connImpl.handleClientSend()
 
 	connImpl.send(&ConnPacket{
 		Username:     c.options.username,
@@ -573,6 +546,8 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 			h(server, math.MaxUint8, ErrTimeOut)
 		}
 		return
+	case <-c.exit:
+		return
 	}
 
 	lg.i("CLIENT connected server =", server)
@@ -581,19 +556,83 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 	}
 
 	// login success, start mqtt logic
-	c.conn.Store(server, connImpl)
 	connImpl.logic()
 
-	if c.options.backoffFactor > 1 {
-		c.workers.Add(1)
+	if !c.isClosing() {
+		// reconnect
 		lg.w("CLIENT reconnecting to server =", server, "delay =", reconnectDelay)
-		go func() {
-			time.Sleep(reconnectDelay)
+		time.Sleep(reconnectDelay)
+
+		if !c.isClosing() {
 			reconnectDelay = time.Duration(float64(reconnectDelay) * c.options.backoffFactor)
 			if reconnectDelay > c.options.maxDelay {
 				reconnectDelay = c.options.maxDelay
 			}
 			c.connect(server, h, reconnectDelay)
-		}()
+		}
+	}
+}
+
+func (c *client) isClosing() bool {
+	select {
+	case <-c.exit:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c *client) handleTopicMsg() {
+	defer c.workers.Done()
+
+	for {
+		select {
+		case <-c.exit:
+			return
+		case pkt, more := <-c.recvC:
+			if !more {
+				return
+			}
+
+			c.router.Dispatch(pkt)
+		}
+	}
+}
+
+func (c *client) handleMsg() {
+	defer c.workers.Done()
+
+	for {
+		select {
+		case <-c.exit:
+			return
+		case m, more := <-c.msgC:
+			if !more {
+				return
+			}
+
+			switch m.what {
+			case pubMsg:
+				if c.pH != nil {
+					go c.pH(m.msg, m.err)
+				}
+			case subMsg:
+				if c.sH != nil {
+					go c.sH(m.obj.([]*Topic), m.err)
+				}
+			case unSubMsg:
+				if c.uH != nil {
+					go c.uH(m.obj.([]string), m.err)
+				}
+			case netMsg:
+				if c.nH != nil {
+					go c.nH(m.msg, m.err)
+				}
+			case persistMsg:
+				if c.psH != nil {
+					go c.psH(m.err)
+				}
+			}
+		}
 	}
 }

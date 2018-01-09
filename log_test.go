@@ -20,7 +20,7 @@ import "testing"
 
 func Test_SilentLogger(t *testing.T) {
 	if l := newLogger(Silent); l != nil {
-		t.Fail()
+		t.Error("failed at silent logger")
 	} else {
 		l.v("test")
 		l.d("test")
@@ -34,7 +34,7 @@ func Test_ErrorLogger(t *testing.T) {
 	if l := newLogger(Error); l == nil ||
 		l.error == nil || l.warning != nil ||
 		l.info != nil || l.debug != nil || l.verbose != nil {
-		t.Fail()
+		t.Error("failed at error logger")
 	} else {
 		l.v("test")
 		l.d("test")
@@ -48,8 +48,7 @@ func Test_WarningLogger(t *testing.T) {
 	if l := newLogger(Warning); l == nil ||
 		l.error == nil || l.warning == nil ||
 		l.info != nil || l.debug != nil || l.verbose != nil {
-		t.Log("failed at warning logger")
-		t.Fail()
+		t.Error("failed at warning logger")
 	} else {
 		l.v("test")
 		l.d("test")
@@ -63,8 +62,7 @@ func Test_InfoLogger(t *testing.T) {
 	if l := newLogger(Info); l == nil ||
 		l.error == nil || l.warning == nil ||
 		l.info == nil || l.debug != nil || l.verbose != nil {
-		t.Log("failed at info logger")
-		t.Fail()
+		t.Error("failed at info logger")
 	} else {
 		l.v("test")
 		l.d("test")
@@ -78,8 +76,7 @@ func Test_DebugLogger(t *testing.T) {
 	if l := newLogger(Debug); l == nil ||
 		l.error == nil || l.warning == nil ||
 		l.info == nil || l.debug == nil || l.verbose != nil {
-		t.Log("failed at debug logger")
-		t.Fail()
+		t.Error("failed at debug logger")
 	} else {
 		l.v("test")
 		l.d("test")
@@ -94,8 +91,7 @@ func Test_VerboseLogger(t *testing.T) {
 	if l := newLogger(Verbose); l == nil ||
 		l.error == nil || l.warning == nil ||
 		l.info == nil || l.debug == nil || l.verbose == nil {
-		t.Log("failed at verbose logger")
-		t.Fail()
+		t.Error("failed at verbose logger")
 	} else {
 		l.v("test")
 		l.d("test")

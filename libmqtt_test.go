@@ -307,14 +307,11 @@ func initPing() {
 func testV311Bytes(pkt Packet, target []byte, t *testing.T) {
 	buf := &bytes.Buffer{}
 	if err := EncodeOnePacket(V311, pkt, buf); err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Error(err)
 	}
 
 	if bytes.Compare(buf.Bytes(), target) != 0 {
-		t.Log("S", buf.Bytes())
-		t.Log("T", target)
-		t.Fail()
+		t.Error("S", buf.Bytes(), "T", target)
 	}
 }
 

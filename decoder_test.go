@@ -38,13 +38,11 @@ func TestDecodeOnePacket(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	if _, err := buf.Write(targetBytes); err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Error(err)
 	} else {
 		pkt, err := DecodeOnePacket(V311, buf)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Error(err)
 		}
 		buf.Reset()
 		switch pkt.(type) {
@@ -52,12 +50,10 @@ func TestDecodeOnePacket(t *testing.T) {
 			pkt.WriteTo(buf)
 			pktBytes := buf.Bytes()
 			if bytes.Compare(pktBytes, targetBytes) != 0 {
-				t.Log(pktBytes)
-				t.Fail()
+				t.Error(pktBytes)
 			}
 		default:
-			t.Log(pkt)
-			t.Fail()
+			t.Error(pkt)
 		}
 	}
 
@@ -87,12 +83,10 @@ func TestDecodeOnePacket(t *testing.T) {
 		0, 4, 112, 97, 115, 115, // Password: "pass"
 	}
 	if _, err := buf.Write(malformedConnBytes); err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Error(err)
 	} else {
 		if _, err := DecodeOnePacket(V311, buf); err == nil {
-			t.Log("decoded conn packet, should not happen")
-			t.Fail()
+			t.Error("decoded conn packet, should not happen")
 		}
 	}
 }
@@ -108,7 +102,7 @@ func BenchmarkDecodeOnePacket(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := DecodeOnePacket(V311, buf)
 		if err != nil {
-			b.Fail()
+			b.Error(err)
 		}
 	}
 }

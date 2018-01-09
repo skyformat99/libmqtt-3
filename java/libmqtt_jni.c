@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "cc_goiiot_libmqtt_LibMQTT.h"
 #include "libmqtt.h"
 
@@ -130,7 +130,6 @@ void topic_handler(int client, char *topic, int qos, char *payload, int size) {
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _init
  * Signature: ()V
  */
@@ -139,26 +138,41 @@ Java_cc_goiiot_libmqtt_LibMQTT__1init
 (JNIEnv *env, jclass c) {
 
   (*env)->GetJavaVM(env, &jvm);
-  libmqtt_class = (jclass) (*env)->NewGlobalRef(env, (*env)->FindClass(env, "cc/goiiot/libmqtt/LibMQTT"));;
 
-  on_conn_msg_mid = (*env)->GetStaticMethodID(env, c,
-                    "onConnMessage", "(IILjava/lang/String;)V");
-  on_net_msg_mid = (*env)->GetStaticMethodID(env, c,
-                   "onNetMessage", "(ILjava/lang/String;)V");
-  on_pub_msg_mid = (*env)->GetStaticMethodID(env, c,
-                   "onPubMessage", "(ILjava/lang/String;Ljava/lang/String;)V");
-  on_sub_msg_mid = (*env)->GetStaticMethodID(env, c,
-                   "onSubMessage", "(ILjava/lang/String;ILjava/lang/String;)V");
-  on_unsub_msg_mid = (*env)->GetStaticMethodID(env, c,
-                     "onUnsubMessage", "(ILjava/lang/String;Ljava/lang/String;)V");
-  on_persist_err_mid = (*env)->GetStaticMethodID(env, c,
-                       "onPersistError", "(ILjava/lang/String;)V");
-  on_topic_msg_mid = (*env)->GetStaticMethodID(env, c,
-                     "onTopicMessage", "(ILjava/lang/String;I[B)V");
+  libmqtt_class = (jclass)(*env)->NewGlobalRef(
+                    env, (*env)->FindClass(env,
+                        "cc/goiiot/libmqtt/LibMQTT"));;
+
+  on_conn_msg_mid = (*env)->GetStaticMethodID(
+                      env, c, "onConnMessage",
+                      "(IILjava/lang/String;)V");
+
+  on_net_msg_mid = (*env)->GetStaticMethodID(
+                     env, c, "onNetMessage",
+                     "(ILjava/lang/String;)V");
+
+  on_pub_msg_mid = (*env)->GetStaticMethodID(
+                     env, c, "onPubMessage",
+                     "(ILjava/lang/String;Ljava/lang/String;)V");
+
+  on_sub_msg_mid = (*env)->GetStaticMethodID(
+                     env, c, "onSubMessage",
+                     "(ILjava/lang/String;ILjava/lang/String;)V");
+
+  on_unsub_msg_mid = (*env)->GetStaticMethodID(
+                       env, c, "onUnsubMessage",
+                       "(ILjava/lang/String;Ljava/lang/String;)V");
+
+  on_persist_err_mid = (*env)->GetStaticMethodID(
+                         env, c, "onPersistError",
+                         "(ILjava/lang/String;)V");
+
+  on_topic_msg_mid = (*env)->GetStaticMethodID(
+                       env, c, "onTopicMessage",
+                       "(ILjava/lang/String;I[B)V");
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _newClient
  * Signature: ()I
  */
@@ -170,7 +184,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1newClient
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setServer
  * Signature: (ILjava/lang/String;)V
  */
@@ -186,7 +199,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setServer
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setCleanSession
  * Signature: (IZ)V
  */
@@ -198,7 +210,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setCleanSession
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setKeepalive
  * Signature: (IID)V
  */
@@ -210,7 +221,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setKeepalive
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setClientID
  * Signature: (ILjava/lang/String;)V
  */
@@ -226,7 +236,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setClientID
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setDialTimeout
  * Signature: (II)V
  */
@@ -238,7 +247,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setDialTimeout
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setIdentity
  * Signature: (ILjava/lang/String;Ljava/lang/String;)V
  */
@@ -256,7 +264,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setIdentity
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setLog
  * Signature: (II)V
  */
@@ -268,7 +275,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setLog
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setSendBuf
  * Signature: (II)V
  */
@@ -280,7 +286,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setSendBuf
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setRecvBuf
  * Signature: (II)V
  */
@@ -292,7 +297,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setRecvBuf
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setTLS
  * Signature: (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
  */
@@ -315,7 +319,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setTLS
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setWill
  * Signature: (ILjava/lang/String;IZ[B)V
  */
@@ -335,7 +338,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setWill
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setNonePersist
  * Signature: (I)V
  */
@@ -347,7 +349,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setNonePersist
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setMemPersist
  * Signature: (IIZZ)V
  */
@@ -360,7 +361,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setMemPersist
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setFilePersist
  * Signature: (ILjava/lang/String;IZZ)V
  */
@@ -377,7 +377,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setFilePersist
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _setup
  * Signature: (I)Ljava/lang/String;
  */
@@ -401,7 +400,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setup
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _handle
  * Signature: (ILjava/lang/String;Lcc/goiiot/libmqtt/LibMQTT/TopicMessageCallback;)V
  */
@@ -421,7 +419,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1handle
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _conn
  * Signature: (I)V
  */
@@ -433,7 +430,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1connect
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _wait
  * Signature: (I)V
  */
@@ -447,7 +443,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1wait
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _pub
  * Signature: (ILjava/lang/String;I[B)V
  */
@@ -466,7 +461,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1pub
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _sub
  * Signature: (ILjava/lang/String;I)V
  */
@@ -482,7 +476,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1sub
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _unsub
  * Signature: (ILjava/lang/String;)V
  */
@@ -498,7 +491,6 @@ Java_cc_goiiot_libmqtt_LibMQTT__1unsub
 }
 
 /*
- * Class:     cc_goiiot_libmqtt_LibMQTT
  * Method:    _destroy
  * Signature: (IZ)V
  */

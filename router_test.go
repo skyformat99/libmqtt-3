@@ -42,8 +42,7 @@ func TestTextRouter_Dispatch(t *testing.T) {
 		newTopic := addTopic()
 		r.Handle(newTopic, func(topic string, code SubAckCode, msg []byte) {
 			if topic != newTopic {
-				t.Log("fail at topic =", topic, ", target topic =", newTopic)
-				t.FailNow()
+				t.Error("fail at topic =", topic, ", target topic =", newTopic)
 			}
 			count++
 		})
@@ -55,8 +54,7 @@ func TestTextRouter_Dispatch(t *testing.T) {
 	}
 
 	if count != topicCount {
-		t.Log("dispatch failed, count =", count)
-		t.FailNow()
+		t.Error("dispatch failed, count =", count)
 	}
 }
 
@@ -91,18 +89,15 @@ func TestRegexRouter_Dispatch(t *testing.T) {
 	}
 
 	if allCount != len(pkts) {
-		t.Log("fail at all pkt count")
-		t.FailNow()
+		t.Error("fail at all pkt count")
 	}
 
 	if prefixCount != 2 {
-		t.Log("fail at prefix pkt count")
-		t.FailNow()
+		t.Error("fail at prefix pkt count")
 	}
 
 	if numCount != 2 {
-		t.Log("fail at num pkt count")
-		t.FailNow()
+		t.Error("fail at num pkt count")
 	}
 }
 

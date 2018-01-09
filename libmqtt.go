@@ -31,6 +31,10 @@ type Topic struct {
 	Qos  QosLevel
 }
 
+func (t *Topic) String() string {
+	return t.Name
+}
+
 const (
 	maxMsgSize = 0xffffff7f
 )
