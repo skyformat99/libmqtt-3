@@ -304,12 +304,13 @@ func initPing() {
 	testPingRespMsgBytes = respBuf.Bytes()
 }
 
-func testBytes(pkt Packet, target []byte, t *testing.T) {
+func testV311Bytes(pkt Packet, target []byte, t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := pkt.WriteTo(buf); err != nil {
+	if err := EncodeOnePacket(V311, pkt, buf); err != nil {
 		t.Log(err)
 		t.Fail()
 	}
+
 	if bytes.Compare(buf.Bytes(), target) != 0 {
 		t.Log("S", buf.Bytes())
 		t.Log("T", target)

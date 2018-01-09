@@ -2,42 +2,39 @@
 
 [![Build Status](https://travis-ci.org/goiiot/libmqtt.svg)](https://travis-ci.org/goiiot/libmqtt) [![GoDoc](https://godoc.org/github.com/goiiot/libmqtt?status.svg)](https://godoc.org/github.com/goiiot/libmqtt) [![GoReportCard](https://goreportcard.com/badge/goiiot/libmqtt)](https://goreportcard.com/report/github.com/goiiot/libmqtt)
 
-Feature rich modern MQTT 3.1.1 client lib in pure Go, for `Go`, `C/C++`, `Java` and `Python`
+Feature rich modern MQTT client lib in pure Go, for `Go`, `C/C++`, `Java` and `Python`
 
 ## Contents
 
 - [Features](#features)
-- [Extensions](#extensions)
 - [Usage](#usage)
 - [Topic Routing](#topic-routing)
 - [Session Persist](#session-persist)
 - [Benchmark](#benchmark)
+- [Extensions](#extensions)
 - [RoadMap](#roadmap)
 - [LICENSE](#license)
 
 ## Features
 
-1. Feature rich MQTT 3.1.1 client
+1. Support MQTT v3.1.1 client (async only, support for MQTT v5 is under development)
 1. HTTP server like API
 1. High performance and less memory footprint (see [Benchmark](#benchmark))
-1. Customizable `TopicRouter` (see [Topic Routing](#topic-routing))
-1. Builtin multiple session persist methods (see [Session Persist](#session-persist))
+1. Customizable topic routing (see [Topic Routing](#topic-routing))
+1. Multiple Builtin session persist methods (see [Session Persist](#session-persist))
 1. [C/C++ lib](./c/), [Java lib](./java/), [Python lib - TODO](./python/), [Command line client](./cmd/) support
-1. Idiomatic Go, reactive stream
-
-## Extensions
-
-Helpful extensions for libmqtt (see [extension](./extension/))
+1. Idiomatic Go
 
 ## Usage
 
 This project can be used as
 
 - A [Go lib](#as-a-go-lib)
-- A [C/C++ lib](#as-a-c-lib)
+- A [C/C++ lib](#as-a-cc-lib)
 - A [Java lib](#as-a-java-lib)
 - A [Python lib](#as-a-python-lib) (TODO)
 - A [Command line client](#as-a-command-line-client)
+- [MQTT infrastructure](#as-mqtt-infrastructure)
 
 ### As a Go lib
 
@@ -71,7 +68,7 @@ if err != nil {
 }
 ```
 
-Notice: If you would like to explore all the options available, please refer to [GoDoc#Option](https://godoc.org/github.com/goiiot/libmqtt#Option)
+__Notice__: If you would like to explore all the options available, please refer to [GoDoc#Option](https://godoc.org/github.com/goiiot/libmqtt#Option)
 
 4. Register the handlers and Connect, then you are ready to pub/sub with server
 
@@ -172,6 +169,20 @@ TODO
 
 Please refer to [cmd - README.md](./cmd/README.md)
 
+### As MQTT infrastructure
+
+This package can also be used as MQTT packet encoder and decoder
+
+```go
+// decode one mqtt packet from reader
+packet, err := libmqtt.DecodeOnePacket(libmqtt.V311, reader)
+// ...
+
+// encode one mqtt packet to buffer writer
+err := libmqtt.EncodeOnePacket(libmqtt.V311, packet, bufferWriter)
+// ...
+```
+
 ## Topic Routing
 
 Routing topics is one of the most important thing when it comes to business logics, we currently have built two `TopicRouter`s which is ready to use, they are `TextRouter` and `RegexRouter`
@@ -207,30 +218,29 @@ The procedure of the benchmark is as following:
 
 1. Create the client
 1. Connect to server
-1. Subscribe to topic `foo`
-1. Publish to topic `foo`
-1. Unsubsecibe when received all published message (with `foo` topic)
+1. Publish N times to topic `foo`
+1. Unsubsecibe topic
 1. Destroy client (a sudden disconnect without disconnect packet)
 
 The benchmark result listed below was taken on a Macbook Pro 13' (Early 2015, macOS 10.13.2), statistics inside which is the value of ten times average
 
-|Bench Name|Pub Count|ns/op|B/op|allocs/op|Transfer Time|Total Time|
-|---|---|---|---|---|---|---|
-|BenchmarkPahoClient-4|10000|199632|1399|31|0.230s|2.021s|
-|BenchmarkLibmqttClient-4|10000|144407|331|9|0.124s|1.467s|
-|BenchmarkPahoClient-4|50000|205884|1395|31|1.170s|10.316s|
-|BenchmarkLibmqttClient-4|50000|161640|328|9|0.717s|8.105s|
+| Bench Name               | Pub Count | ns/op | B/op | allocs/op |
+| ------------------------ | --------- | ----- | ---- | --------- |
+| BenchmarkLibmqttClient-4 | 10000     | 12011 | 405  | 5         |
+| BenchmarkGmqClient-4     | 10000     | 16590 | 809  | 8         |
+| BenchmarkPahoClient-4    | 10000     | 32604 | 1232 | 16        |
 
 You can make the benchmark using source code from [benchmark](./benchmark/)
 
-Notice: benchmark on libmqtt sometimes can be a infinite loop, we are now trying to solve that
+## Extensions
+
+Helpful extensions for libmqtt (see [extension](./extension/))
 
 ## RoadMap
 
-1. File persist storage of session status (High priority)
 1. Full tested multiple connections in one client (High priority)
 1. Add compatibility with mqtt 5.0 (Medium priority)
-1. Export to Python (CPython)... (Low priority)
+1. Export to Python (using ctypes) (Low priority)
 
 ## LICENSE
 

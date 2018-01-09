@@ -19,7 +19,7 @@ package libmqtt
 // ConnPacket is the first packet sent by Client to Server
 type ConnPacket struct {
 	protoName    string
-	protoLevel   ProtocolLevel
+	protoLevel   ProtocolVersion
 	Username     string
 	Password     string
 	ClientID     string

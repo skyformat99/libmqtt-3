@@ -16,8 +16,93 @@
 
 package libmqtt
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestEncodeRemainLength(t *testing.T) {
+	buf := &bytes.Buffer{}
 
+	for i := 0; i <= 127; i++ {
+		writeRemainLength(i, buf)
+		result := buf.Bytes()
+		if len(result) != 1 {
+			t.Log("fail at level 1 target:", i, ", result:", result)
+			t.Fail()
+		}
+		buf.Reset()
+	}
+
+	for i := 128; i <= 16383; i++ {
+		writeRemainLength(i, buf)
+		result := buf.Bytes()
+		if len(result) != 2 {
+			t.Log("fail at level 2 target:", i, ", result:", result)
+			t.Fail()
+		}
+		buf.Reset()
+	}
+
+	for i := 16384; i <= 2097151; i++ {
+		writeRemainLength(i, buf)
+		result := buf.Bytes()
+		if len(result) != 3 {
+			t.Log("fail at level 3 target:", i, ", result:", result)
+			t.Fail()
+		}
+		buf.Reset()
+	}
+
+	for i := 2097152; i <= 268435455; i++ {
+		writeRemainLength(i, buf)
+		result := buf.Bytes()
+		if len(result) != 4 {
+			t.Log("fail at level 4 target:", i, ", result:", result)
+			t.Fail()
+		}
+		buf.Reset()
+	}
+}
+
+func TestEncodeOnePacket(t *testing.T) {
+
+}
+
+func TestEncodeOneV311Packet(t *testing.T) {
+
+}
+
+func TestEncodeOneV5Packet(t *testing.T) {
+
+}
+
+func BenchmarkFuncDecode(b *testing.B) {
+	buf := &bytes.Buffer{}
+	pkt := testPubMsgs[0]
+
+	b.ReportAllocs()
+	b.N = 100000000
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := EncodeOnePacket(V311, pkt, buf); err != nil {
+			b.Log(err)
+			b.Fail()
+		}
+	}
+}
+
+func BenchmarkMethodDecode(b *testing.B) {
+	buf := &bytes.Buffer{}
+	pkt := testPubMsgs[0]
+
+	b.ReportAllocs()
+	b.N = 100000000
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := pkt.WriteTo(buf); err != nil {
+			b.Log(err)
+			b.Fail()
+		}
+	}
 }

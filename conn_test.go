@@ -21,17 +21,17 @@ import (
 )
 
 func TestConnPacket_Bytes(t *testing.T) {
-	testBytes(testConnMsg, testConnMsgBytes, t)
+	testV311Bytes(testConnMsg, testConnMsgBytes, t)
 }
 
 func TestConnWillPacket_Bytes(t *testing.T) {
-	testBytes(testConnWillMsg, testConnWillMsgBytes, t)
+	testV311Bytes(testConnWillMsg, testConnWillMsgBytes, t)
 }
 
 func TestConnAckPacket_Bytes(t *testing.T) {
-	testBytes(testConnAckMsg, testConnAckMsgBytes, t)
+	testV311Bytes(testConnAckMsg, testConnAckMsgBytes, t)
 }
 
 func TestDisConnPacket_Bytes(t *testing.T) {
-	testBytes(testDisConnMsg, testDisConnMsgBytes, t)
+	testV311Bytes(testDisConnMsg, testDisConnMsgBytes, t)
 }

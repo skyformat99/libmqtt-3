@@ -5,9 +5,9 @@ import (
 )
 
 func TestPingReqPacket_Bytes(t *testing.T) {
-	testBytes(testPingReqMsg, testPingReqMsgBytes, t)
+	testV311Bytes(testPingReqMsg, testPingReqMsgBytes, t)
 }
 
 func TestPingRespPacket_Bytes(t *testing.T) {
-	testBytes(testPingRespMsg, testPingRespMsgBytes, t)
+	testV311Bytes(testPingRespMsg, testPingRespMsgBytes, t)
 }

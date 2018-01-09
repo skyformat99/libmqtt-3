@@ -22,22 +22,22 @@ import (
 
 func TestSubscribePacket_Bytes(t *testing.T) {
 	for i, p := range testSubMsgs {
-		testBytes(p, testSubMsgBytes[i], t)
+		testV311Bytes(p, testSubMsgBytes[i], t)
 	}
 }
 
 func TestSubAckPacket_Bytes(t *testing.T) {
 	for i, p := range testSubAckMsgs {
-		testBytes(p, testSubAckMsgBytes[i], t)
+		testV311Bytes(p, testSubAckMsgBytes[i], t)
 	}
 }
 
 func TestUnSubPacket_Bytes(t *testing.T) {
 	for i, p := range testUnSubMsgs {
-		testBytes(p, testUnSubMsgBytes[i], t)
+		testV311Bytes(p, testUnSubMsgBytes[i], t)
 	}
 }
 
 func TestUnSubAckPacket_Bytes(t *testing.T) {
-	testBytes(testUnSubAckMsg, testUnSubAckMsgBytes, t)
+	testV311Bytes(testUnSubAckMsg, testUnSubAckMsgBytes, t)
 }

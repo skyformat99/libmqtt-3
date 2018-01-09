@@ -278,30 +278,30 @@ func TestClient_UnSubscribe(t *testing.T) {
 	c.Wait()
 }
 
-//func TestClient_Reconnect(t *testing.T) {
-//	c := plainClient(t, nil).(*client)
-//	var count uint32
-//	c.Connect(func(server string, code ConnAckCode, err error) {
-//		if err != nil {
-//			t.Log(err)
-//			t.FailNow()
-//		}
-//
-//		if code != ConnAccepted {
-//			t.Log(code)
-//			t.FailNow()
-//		}
-//
-//		if atomic.LoadUint32(&count) < 3 {
-//			c.conn.Range(func(key, value interface{}) bool {
-//				v := value.(*connImpl)
-//				v.conn.Close()
-//				return true
-//			})
-//			atomic.AddUint32(&count, 1)
-//		} else {
-//			c.Destroy(true)
-//		}
-//	})
-//	c.Wait()
-//}
+func TestClient_Reconnect(t *testing.T) {
+	c := plainClient(t, nil).(*client)
+	var count uint32
+	c.Connect(func(server string, code ConnAckCode, err error) {
+		if err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+
+		if code != ConnAccepted {
+			t.Log(code)
+			t.FailNow()
+		}
+
+		if atomic.LoadUint32(&count) < 3 {
+			c.conn.Range(func(key, value interface{}) bool {
+				v := value.(*clientConn)
+				v.conn.Close()
+				return true
+			})
+			atomic.AddUint32(&count, 1)
+		} else {
+			c.Destroy(true)
+		}
+	})
+	c.Wait()
+}

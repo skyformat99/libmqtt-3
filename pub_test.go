@@ -22,22 +22,22 @@ import (
 
 func TestPublishPacket_Bytes(t *testing.T) {
 	for i, p := range testPubMsgs {
-		testBytes(p, testPubMsgBytes[i], t)
+		testV311Bytes(p, testPubMsgBytes[i], t)
 	}
 }
 
 func TestPubAckPacket_Bytes(t *testing.T) {
-	testBytes(testPubAckMsg, testPubAckMsgBytes, t)
+	testV311Bytes(testPubAckMsg, testPubAckMsgBytes, t)
 }
 
 func TestPubRecvPacket_Bytes(t *testing.T) {
-	testBytes(testPubRecvMsg, testPubRecvMsgBytes, t)
+	testV311Bytes(testPubRecvMsg, testPubRecvMsgBytes, t)
 }
 
 func TestPubRelPacket_Bytes(t *testing.T) {
-	testBytes(testPubRelMsg, testPubRelMsgBytes, t)
+	testV311Bytes(testPubRelMsg, testPubRelMsgBytes, t)
 }
 
 func TestPubCompPacket_Bytes(t *testing.T) {
-	testBytes(testPubCompMsg, testPubCompMsgBytes, t)
+	testV311Bytes(testPubCompMsg, testPubCompMsgBytes, t)
 }
