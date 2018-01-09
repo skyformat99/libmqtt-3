@@ -41,7 +41,7 @@ func TestDecodeOnePacket(t *testing.T) {
 		t.Log(err)
 		t.Fail()
 	} else {
-		pkt, err := DecodeOnePacket(buf)
+		pkt, err := DecodeOnePacket(V311, buf)
 		if err != nil {
 			t.Log(err)
 			t.Fail()
@@ -90,7 +90,7 @@ func TestDecodeOnePacket(t *testing.T) {
 		t.Log(err)
 		t.Fail()
 	} else {
-		if _, err := DecodeOnePacket(buf); err == nil {
+		if _, err := DecodeOnePacket(V311, buf); err == nil {
 			t.Log("decoded conn packet, should not happen")
 			t.Fail()
 		}
@@ -106,7 +106,7 @@ func BenchmarkDecodeOnePacket(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := DecodeOnePacket(buf)
+		_, err := DecodeOnePacket(V311, buf)
 		if err != nil {
 			b.Fail()
 		}

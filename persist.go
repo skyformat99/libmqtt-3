@@ -356,7 +356,7 @@ func (m *FilePersist) getPacketFromFile(path string) (Packet, error) {
 		return nil, err
 	}
 
-	packet, err := DecodeOnePacket(bytes.NewReader(content))
+	packet, err := DecodeOnePacket(V311, bytes.NewReader(content))
 	if err != nil {
 		return nil, err
 	}
