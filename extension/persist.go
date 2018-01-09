@@ -86,7 +86,7 @@ func (r *RedisPersist) Load(key string) (lib.Packet, bool) {
 	}
 
 	if rs, err := r.conn.HGet(r.mainKey, key).Result(); err != nil {
-		if pkt, err := lib.DecodeOnePacket(strings.NewReader(rs)); err != nil {
+		if pkt, err := lib.DecodeOnePacket(lib.V311, strings.NewReader(rs)); err != nil {
 			// delete wrong packet
 			r.Delete(key)
 		} else {
@@ -105,7 +105,7 @@ func (r *RedisPersist) Range(f func(string, lib.Packet) bool) {
 
 	if set, err := r.conn.HGetAll(r.mainKey).Result(); err == nil {
 		for k, v := range set {
-			if pkt, err := lib.DecodeOnePacket(strings.NewReader(v)); err != nil {
+			if pkt, err := lib.DecodeOnePacket(lib.V311, strings.NewReader(v)); err != nil {
 				r.Delete(k)
 				continue
 			} else {

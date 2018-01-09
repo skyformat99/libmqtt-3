@@ -32,6 +32,7 @@ client:
 	$(MAKE) -C cmd build
 
 clean: clean-all-lib fuzz-clean
+	rm -rf coverage.txt
 
 fuzz-test:
 	go-fuzz-build github.com/goiiot/libmqtt
