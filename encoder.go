@@ -41,8 +41,8 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 		return nil
 	}
 
-	switch pkt.Type() {
-	case CtrlConn:
+	switch pkt.(type) {
+	case *ConnPacket:
 		c := pkt.(*ConnPacket)
 		w.WriteByte(CtrlConn << 4)
 		payload := c.payload()
@@ -56,44 +56,44 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 		w.WriteByte(byte(c.Keepalive))
 		_, err := w.Write(payload)
 		return err
-	case CtrlConnAck:
+	case *ConnAckPacket:
 		c := pkt.(*ConnAckPacket)
 		w.WriteByte(CtrlConnAck << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(boolToByte(c.Present))
 		return w.WriteByte(c.Code)
-	case CtrlPublish:
+	case *PublishPacket:
 		p := pkt.(*PublishPacket)
 		w.WriteByte(CtrlPublish<<4 | boolToByte(p.IsDup)<<3 | boolToByte(p.IsRetain) | p.Qos<<1)
 		payload := p.payload()
 		writeRemainLength(len(payload), w)
 		_, err := w.Write(payload)
 		return err
-	case CtrlPubAck:
+	case *PubAckPacket:
 		p := pkt.(*PubAckPacket)
 		w.WriteByte(CtrlPubAck << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlPubRecv:
+	case *PubRecvPacket:
 		p := pkt.(*PubRecvPacket)
 		w.WriteByte(CtrlPubRecv << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlPubRel:
+	case *PubRelPacket:
 		p := pkt.(*PubRelPacket)
 		w.WriteByte(CtrlPubRel<<4 | 0x02)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlPubComp:
+	case *PubCompPacket:
 		p := pkt.(*PubCompPacket)
 		w.WriteByte(CtrlPubComp << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlSubscribe:
+	case *SubscribePacket:
 		s := pkt.(*SubscribePacket)
 		w.WriteByte(CtrlSubscribe<<4 | 0x02)
 		payload := s.payload()
@@ -102,7 +102,7 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
 		return err
-	case CtrlSubAck:
+	case *SubAckPacket:
 		s := pkt.(*SubAckPacket)
 		w.WriteByte(CtrlSubAck << 4)
 		payload := s.payload()
@@ -111,7 +111,7 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
 		return err
-	case CtrlUnSub:
+	case *UnSubPacket:
 		s := pkt.(*UnSubPacket)
 		w.WriteByte(CtrlUnSub<<4 | 0x02)
 		payload := s.payload()
@@ -120,19 +120,19 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
 		return err
-	case CtrlUnSubAck:
+	case *UnSubAckPacket:
 		s := pkt.(*UnSubAckPacket)
 		w.WriteByte(CtrlUnSubAck << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(s.PacketID >> 8))
 		return w.WriteByte(byte(s.PacketID))
-	case CtrlPingReq:
+	case *pingReqPacket:
 		w.WriteByte(CtrlPingReq << 4)
 		return w.WriteByte(0x00)
-	case CtrlPingResp:
+	case *pingRespPacket:
 		w.WriteByte(CtrlPingResp << 4)
 		return w.WriteByte(0x00)
-	case CtrlDisConn:
+	case *disConnPacket:
 		w.WriteByte(CtrlDisConn << 4)
 		return w.WriteByte(0x00)
 	}

@@ -4,6 +4,11 @@
 
 - MQTT Broker - emqttd (Docker)
 
+## NOTICE
+
+- The benchmark is highly dependent on the performance of your MQTT broker
+- According to the Wireshark captcha, GMQ will leave some package unsent
+
 ## LICENSE
 
 ```text

@@ -20,8 +20,12 @@ type clientConn struct {
 
 // start mqtt logic
 func (c *clientConn) logic() {
-	defer c.parent.workers.Done()
-	defer lg.i("CONN exit logic for server =", c.name)
+	defer func() {
+		c.conn.Close()
+		c.parent.workers.Done()
+		lg.e("CONN exit logic for server =", c.name)
+	}()
+
 	// start keepalive if required
 	if c.parent.options.keepalive > 0 {
 		c.parent.workers.Add(1)
@@ -30,16 +34,15 @@ func (c *clientConn) logic() {
 
 	for {
 		select {
-		case <-c.parent.exit:
-			c.conn.Close()
+		case <-c.parent.ctx.Done():
 			return
 		case pkt, more := <-c.netRecvC:
 			if !more {
 				return
 			}
 
-			switch pkt.Type() {
-			case CtrlSubAck:
+			switch pkt.(type) {
+			case *SubAckPacket:
 				p := pkt.(*SubAckPacket)
 				lg.d("NET received SubAck, id =", p.PacketID)
 
@@ -54,15 +57,14 @@ func (c *clientConn) logic() {
 							}
 						}
 						lg.d("CLIENT subscribed topics =", originSub.Topics)
-						c.parent.msgC <- newSubMsg(originSub.Topics, nil)
+						notifyMsg(c.parent.msgC, newSubMsg(originSub.Topics, nil))
 						c.parent.idGen.free(p.PacketID)
 
-						if err := c.parent.persist.Delete(sendKey(p.PacketID)); err != nil {
-							c.parent.msgC <- newPersistMsg(err)
-						}
+						notifyMsg(c.parent.msgC, newPersistMsg(
+							c.parent.persist.Delete(sendKey(p.PacketID))))
 					}
 				}
-			case CtrlUnSubAck:
+			case *UnSubAckPacket:
 				p := pkt.(*UnSubAckPacket)
 				lg.d("NET received UnSubAck, id =", p.PacketID)
 
@@ -71,15 +73,14 @@ func (c *clientConn) logic() {
 					case *UnSubPacket:
 						originUnSub := originPkt.(*UnSubPacket)
 						lg.d("CLIENT unSubscribed topics", originUnSub.TopicNames)
-						c.parent.msgC <- newUnSubMsg(originUnSub.TopicNames, nil)
+						notifyMsg(c.parent.msgC, newUnSubMsg(originUnSub.TopicNames, nil))
 						c.parent.idGen.free(p.PacketID)
 
-						if err := c.parent.persist.Delete(sendKey(p.PacketID)); err != nil {
-							c.parent.msgC <- newPersistMsg(err)
-						}
+						notifyMsg(c.parent.msgC, newPersistMsg(
+							c.parent.persist.Delete(sendKey(p.PacketID))))
 					}
 				}
-			case CtrlPublish:
+			case *PublishPacket:
 				p := pkt.(*PublishPacket)
 				lg.d("NET received publish, topic =", p.TopicName, "id =", p.PacketID, "QoS =", p.Qos)
 				// received server publish, send to client
@@ -91,18 +92,16 @@ func (c *clientConn) logic() {
 					lg.d("NET send PubAck for Publish, id =", p.PacketID)
 					c.send(&PubAckPacket{PacketID: p.PacketID})
 
-					if err := c.parent.persist.Store(recvKey(p.PacketID), pkt); err != nil {
-						c.parent.msgC <- newPersistMsg(err)
-					}
+					notifyMsg(c.parent.msgC, newPersistMsg(
+						c.parent.persist.Store(recvKey(p.PacketID), pkt)))
 				case Qos2:
 					lg.d("NET send PubRecv for Publish, id =", p.PacketID)
 					c.send(&PubRecvPacket{PacketID: p.PacketID})
 
-					if err := c.parent.persist.Store(recvKey(p.PacketID), pkt); err != nil {
-						c.parent.msgC <- newPersistMsg(err)
-					}
+					notifyMsg(c.parent.msgC, newPersistMsg(
+						c.parent.persist.Store(recvKey(p.PacketID), pkt)))
 				}
-			case CtrlPubAck:
+			case *PubAckPacket:
 				p := pkt.(*PubAckPacket)
 				lg.d("NET received PubAck, id =", p.PacketID)
 
@@ -112,16 +111,15 @@ func (c *clientConn) logic() {
 						originPub := originPkt.(*PublishPacket)
 						if originPub.Qos == Qos1 {
 							lg.d("CLIENT published qos1 packet, topic =", originPub.TopicName)
-							c.parent.msgC <- newPubMsg(originPub.TopicName, nil)
+							notifyMsg(c.parent.msgC, newPubMsg(originPub.TopicName, nil))
 							c.parent.idGen.free(p.PacketID)
 
-							if err := c.parent.persist.Delete(sendKey(p.PacketID)); err != nil {
-								c.parent.msgC <- newPersistMsg(err)
-							}
+							notifyMsg(c.parent.msgC, newPersistMsg(
+								c.parent.persist.Delete(sendKey(p.PacketID))))
 						}
 					}
 				}
-			case CtrlPubRecv:
+			case *PubRecvPacket:
 				p := pkt.(*PubRecvPacket)
 				lg.d("NET received PubRec, id =", p.PacketID)
 
@@ -135,7 +133,7 @@ func (c *clientConn) logic() {
 						}
 					}
 				}
-			case CtrlPubRel:
+			case *PubRelPacket:
 				p := pkt.(*PubRelPacket)
 				lg.d("NET send PubRel, id =", p.PacketID)
 
@@ -147,13 +145,12 @@ func (c *clientConn) logic() {
 							c.send(&PubCompPacket{PacketID: p.PacketID})
 							lg.d("NET send PubComp, id =", p.PacketID)
 
-							if err := c.parent.persist.Store(recvKey(p.PacketID), pkt); err != nil {
-								c.parent.msgC <- newPersistMsg(err)
-							}
+							notifyMsg(c.parent.msgC, newPersistMsg(
+								c.parent.persist.Store(recvKey(p.PacketID), pkt)))
 						}
 					}
 				}
-			case CtrlPubComp:
+			case *PubCompPacket:
 				p := pkt.(*PubCompPacket)
 				lg.d("NET received PubComp, id =", p.PacketID)
 
@@ -165,12 +162,11 @@ func (c *clientConn) logic() {
 							c.send(&PubRelPacket{PacketID: p.PacketID})
 							lg.d("NET send PubRel, id =", p.PacketID)
 							lg.d("CLIENT published qos2 packet, topic =", originPub.TopicName)
-							c.parent.msgC <- newPubMsg(originPub.TopicName, nil)
+							notifyMsg(c.parent.msgC, newPubMsg(originPub.TopicName, nil))
 							c.parent.idGen.free(p.PacketID)
 
-							if err := c.parent.persist.Delete(sendKey(p.PacketID)); err != nil {
-								c.parent.msgC <- newPersistMsg(err)
-							}
+							notifyMsg(c.parent.msgC, newPersistMsg(
+								c.parent.persist.Delete(sendKey(p.PacketID))))
 						}
 					}
 				}
@@ -183,25 +179,27 @@ func (c *clientConn) logic() {
 
 // keepalive with server
 func (c *clientConn) keepalive() {
-	defer c.parent.workers.Done()
-
 	lg.d("NET start keepalive")
-	defer lg.d("NET stop keepalive for server =", c.name)
 
 	t := time.NewTicker(c.parent.options.keepalive * 3 / 4)
 	timeout := time.Duration(float64(c.parent.options.keepalive) * c.parent.options.keepaliveFactor)
 	timeoutTimer := time.NewTimer(timeout)
-	defer t.Stop()
+
+	defer func() {
+		t.Stop()
+		c.parent.workers.Done()
+		lg.d("NET stop keepalive for server =", c.name)
+	}()
 
 	for {
 		select {
-		case <-c.parent.exit:
+		case <-c.parent.ctx.Done():
 			return
 		case <-t.C:
 			c.send(PingReqPacket)
 
 			select {
-			case <-c.parent.exit:
+			case <-c.parent.ctx.Done():
 				return
 			case _, more := <-c.keepaliveC:
 				if !more {
@@ -219,13 +217,14 @@ func (c *clientConn) keepalive() {
 
 // handle mqtt logic control packet send
 func (c *clientConn) handleSend() {
-	defer c.parent.workers.Done()
-	defer lg.i("CONN exit send handler for server =", c.name)
+	defer func() {
+		c.parent.workers.Done()
+		lg.e("CONN exit send handler for server =", c.name)
+	}()
 
 	for {
 		select {
-		case <-c.parent.exit:
-			c.conn.Close()
+		case <-c.parent.ctx.Done():
 			return
 		case pkt, more := <-c.parent.sendC:
 			if !more {
@@ -247,11 +246,11 @@ func (c *clientConn) handleSend() {
 				p := pkt.(*PublishPacket)
 				if p.Qos == 0 {
 					lg.d("CLIENT published qos0 packet, topic =", p.TopicName)
-					c.parent.msgC <- newPubMsg(p.TopicName, nil)
+					notifyMsg(c.parent.msgC, newPubMsg(p.TopicName, nil))
 				}
 			case CtrlDisConn:
 				// client exit with disconn
-				close(c.parent.exit)
+				c.parent.exit()
 				return
 			}
 		case pkt, more := <-c.logicSendC:
@@ -271,17 +270,14 @@ func (c *clientConn) handleSend() {
 
 			switch pkt.Type() {
 			case CtrlPubRel:
-				if err := c.parent.persist.Store(sendKey(pkt.(*PubRelPacket).PacketID), pkt); err != nil {
-					c.parent.msgC <- newPersistMsg(err)
-				}
+				notifyMsg(c.parent.msgC, newPersistMsg(
+					c.parent.persist.Store(sendKey(pkt.(*PubRelPacket).PacketID), pkt)))
 			case CtrlPubAck:
-				if err := c.parent.persist.Delete(sendKey(pkt.(*PubAckPacket).PacketID)); err != nil {
-					c.parent.msgC <- newPersistMsg(err)
-				}
+				notifyMsg(c.parent.msgC, newPersistMsg(
+					c.parent.persist.Delete(sendKey(pkt.(*PubAckPacket).PacketID))))
 			case CtrlPubComp:
-				if err := c.parent.persist.Delete(sendKey(pkt.(*PubCompPacket).PacketID)); err != nil {
-					c.parent.msgC <- newPersistMsg(err)
-				}
+				notifyMsg(c.parent.msgC, newPersistMsg(
+					c.parent.persist.Delete(sendKey(pkt.(*PubCompPacket).PacketID))))
 			case CtrlDisConn:
 				// disconnect to server
 				c.conn.Close()
@@ -293,12 +289,14 @@ func (c *clientConn) handleSend() {
 
 // handle all message receive
 func (c *clientConn) handleRecv() {
-	defer c.parent.workers.Done()
-	defer lg.i("CONN exit recv handler for server =", c.name)
+	defer func() {
+		c.parent.workers.Done()
+		lg.e("CONN exit recv handler for server =", c.name)
+	}()
 
 	for {
 		select {
-		case <-c.parent.exit:
+		case <-c.parent.ctx.Done():
 			return
 		default:
 			pkt, err := DecodeOnePacket(c.parent.options.protoVersion, c.conn)
@@ -330,7 +328,9 @@ func (c *clientConn) handleRecv() {
 
 // send mqtt logic packet
 func (c *clientConn) send(pkt Packet) {
-	if !c.parent.isClosing() {
-		c.logicSendC <- pkt
+	if c.parent.isClosing() {
+		return
 	}
+
+	c.logicSendC <- pkt
 }

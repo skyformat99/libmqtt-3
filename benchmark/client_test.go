@@ -31,13 +31,11 @@ import (
 const (
 	testKeepalive = 3600             // prevent keepalive packet disturb
 	testServer    = "localhost:1883" // emqttd server address
-	testUsername  = "foo"
-	testPassword  = "bar"
 	testTopic     = "/foo"
 	testQos       = 0
 	testBufSize   = 1024 // same with gmq default
 
-	testPubCount = 10000
+	testPubCount = 1
 )
 
 var (
@@ -47,8 +45,7 @@ var (
 			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
 			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
 			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
-			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
-			"12345",
+			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890",
 	)
 )
 
@@ -59,14 +56,21 @@ func BenchmarkLibmqttClient(b *testing.B) {
 	var err error
 
 	if client, err = lib.NewClient(
+		lib.WithLog(lib.Error),
 		lib.WithServer(testServer),
 		lib.WithKeepalive(testKeepalive, 1.2),
-		lib.WithIdentity(testUsername, testPassword),
 		lib.WithRecvBuf(testBufSize),
 		lib.WithSendBuf(testBufSize),
 		lib.WithCleanSession(true)); err != nil {
 		b.Error(err)
 	}
+
+	client.HandleUnSub(func(topic []string, err error) {
+		if err != nil {
+			b.Error(err)
+		}
+		client.Destroy(true)
+	})
 
 	client.Connect(func(server string, code lib.ConnAckCode, err error) {
 		if err != nil {
@@ -76,6 +80,7 @@ func BenchmarkLibmqttClient(b *testing.B) {
 		}
 
 		b.ResetTimer()
+		println("connected")
 		for i := 0; i < b.N; i++ {
 			client.Publish(&lib.PublishPacket{
 				TopicName: testTopic,
@@ -84,7 +89,6 @@ func BenchmarkLibmqttClient(b *testing.B) {
 			})
 		}
 		client.UnSubscribe(testTopic)
-		client.Destroy(false)
 	})
 	client.Wait()
 }
@@ -101,8 +105,6 @@ func BenchmarkPahoClient(b *testing.B) {
 	client := pah.NewClient(&pah.ClientOptions{
 		Servers:             []*url.URL{serverURL},
 		KeepAlive:           testKeepalive,
-		Username:            testUsername,
-		Password:            testPassword,
 		CleanSession:        true,
 		ProtocolVersion:     4,
 		MessageChannelDepth: testBufSize,
@@ -145,8 +147,6 @@ func BenchmarkGmqClient(b *testing.B) {
 	if err := client.Connect(&gmq.ConnectOptions{
 		Network:      "tcp",
 		Address:      testServer,
-		UserName:     []byte(testUsername),
-		Password:     []byte(testPassword),
 		KeepAlive:    testKeepalive,
 		CleanSession: true,
 	}); err != nil {
@@ -157,7 +157,6 @@ func BenchmarkGmqClient(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		if err := client.Publish(&gmq.PublishOptions{
 			QoS:       testQos,
-			Retain:    false,
 			TopicName: []byte(testTopic),
 			Message:   testTopicMsg,
 		}); err != nil {

@@ -34,6 +34,12 @@ type message struct {
 	obj  interface{}
 }
 
+func notifyMsg(ch chan<- *message, msg *message) {
+	if msg != nil {
+		ch <- msg
+	}
+}
+
 func newPubMsg(topic string, err error) *message {
 	return &message{
 		what: pubMsg,
@@ -67,6 +73,10 @@ func newNetMsg(server string, err error) *message {
 }
 
 func newPersistMsg(err error) *message {
+	if err == nil {
+		return nil
+	}
+
 	return &message{
 		what: persistMsg,
 		err:  err,

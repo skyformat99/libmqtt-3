@@ -18,6 +18,7 @@ package libmqtt
 
 import (
 	"bufio"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -278,18 +279,19 @@ type client struct {
 	msgC    chan *message       // error channel
 	sendC   chan Packet         // Pub channel for sending publish packet to server
 	recvC   chan *PublishPacket // recv channel for server pub receiving
-	exit    chan int            // closure of this channel will signal all client worker to stop
 	idGen   *idGenerator        // Packet id generator
 	router  TopicRouter         // Topic router
 	persist PersistMethod       // Persist method
 	workers *sync.WaitGroup     // Workers (connections)
+	ctx     context.Context     // closure of this channel will signal all client worker to stop
+	exit    context.CancelFunc  // called when client exit
 
 	// success/error handlers
-	pH  PubHandler
-	sH  SubHandler
-	uH  UnSubHandler
-	nH  NetHandler
-	psH PersistHandler
+	pubHandler     PubHandler
+	subHandler     SubHandler
+	unSubHandler   UnSubHandler
+	netHandler     NetHandler
+	persistHandler PersistHandler
 }
 
 // clientOptions is the options for client to connect, reconnect, disconnect
@@ -304,7 +306,7 @@ type clientOptions struct {
 	username        string          // used by ConnPacket
 	password        string          // used by ConnPacket
 	keepalive       time.Duration   // used by ConnPacket (time in second)
-	keepaliveFactor float64         // used for reasonable amount time to close conns if no ping resp
+	keepaliveFactor float64         // used for reasonable amount time to close conn if no ping resp
 	cleanSession    bool            // used by ConnPacket
 	isWill          bool            // used by ConnPacket
 	willTopic       string          // used by ConnPacket
@@ -319,6 +321,7 @@ type clientOptions struct {
 
 // defaultClient create the client with default options
 func defaultClient() *client {
+	ctx, cancel := context.WithCancel(context.TODO())
 	return &client{
 		options: &clientOptions{
 			sendChanSize:    128,
@@ -332,7 +335,8 @@ func defaultClient() *client {
 			protoVersion:    V311,             // default protocol version is MQTT 3.1.1
 		},
 		msgC:    make(chan *message),
-		exit:    make(chan int),
+		ctx:     ctx,
+		exit:    cancel,
 		router:  NewTextRouter(),
 		idGen:   newIDGenerator(),
 		workers: &sync.WaitGroup{},
@@ -352,70 +356,80 @@ func (c *client) Handle(topic string, h TopicHandler) {
 func (c *client) Connect(h ConnHandler) {
 	lg.d("CLIENT connect to server, handler =", h)
 
-	c.workers.Add(2)
-	go c.handleTopicMsg()
-	go c.handleMsg()
-
 	for _, s := range c.options.servers {
 		c.workers.Add(1)
 		go c.connect(s, h, c.options.firstDelay)
 	}
+
+	c.workers.Add(2)
+	go c.handleTopicMsg()
+	go c.handleMsg()
 }
 
 // Publish message(s) to topic(s), one to one
 func (c *client) Publish(msg ...*PublishPacket) {
-	if !c.isClosing() {
-		for _, m := range msg {
-			if m == nil {
-				continue
-			}
+	if c.isClosing() {
+		return
+	}
 
-			p := m
-			if p.Qos > Qos2 {
-				p.Qos = Qos2
-			}
+	for _, m := range msg {
+		if m == nil {
+			continue
+		}
 
-			if p.Qos != Qos0 {
-				if p.PacketID == 0 {
-					p.PacketID = c.idGen.next(p)
-					if err := c.persist.Store(sendKey(p.PacketID), p); err != nil {
-						c.msgC <- newPersistMsg(err)
-					}
+		p := m
+		if p.Qos > Qos2 {
+			p.Qos = Qos2
+		}
+
+		if p.Qos != Qos0 {
+			if p.PacketID == 0 {
+				p.PacketID = c.idGen.next(p)
+				if err := c.persist.Store(sendKey(p.PacketID), p); err != nil {
+					c.msgC <- newPersistMsg(err)
 				}
 			}
-			c.sendC <- p
 		}
+		c.sendC <- p
 	}
 }
 
 // SubScribe topic(s)
 func (c *client) Subscribe(topics ...*Topic) {
-	if !c.isClosing() {
-		lg.d("CLIENT subscribe, topic(s) =", topics)
-		s := &SubscribePacket{Topics: topics}
-		s.PacketID = c.idGen.next(s)
-		c.sendC <- s
+	if c.isClosing() {
+		return
 	}
+
+	lg.d("CLIENT subscribe, topic(s) =", topics)
+
+	s := &SubscribePacket{Topics: topics}
+	s.PacketID = c.idGen.next(s)
+
+	c.sendC <- s
 }
 
 // UnSubscribe topic(s)
 func (c *client) UnSubscribe(topics ...string) {
-	if !c.isClosing() {
-		lg.d("CLIENT unsubscribe topic(s) =", topics)
-		u := &UnSubPacket{
-			TopicNames: topics,
-		}
-		u.PacketID = c.idGen.next(u)
-		c.sendC <- u
+	if c.isClosing() {
+		return
 	}
+
+	lg.d("CLIENT unsubscribe topic(s) =", topics)
+
+	u := &UnSubPacket{TopicNames: topics}
+	u.PacketID = c.idGen.next(u)
+
+	c.sendC <- u
 }
 
 // Wait will wait for all connection to exit
 func (c *client) Wait() {
-	if !c.isClosing() {
-		lg.i("CLIENT wait for all workers")
-		c.workers.Wait()
+	if c.isClosing() {
+		return
 	}
+
+	lg.i("CLIENT wait for all workers")
+	c.workers.Wait()
 }
 
 // Destroy will disconnect form all server
@@ -423,7 +437,7 @@ func (c *client) Wait() {
 func (c *client) Destroy(force bool) {
 	lg.d("CLIENT destroying client with force =", force)
 	if force {
-		close(c.exit)
+		c.exit()
 	} else {
 		c.sendC <- DisConnPacket
 	}
@@ -432,31 +446,31 @@ func (c *client) Destroy(force bool) {
 // HandlePubMsg register handler for pub error
 func (c *client) HandlePub(h PubHandler) {
 	lg.d("CLIENT registered pub handler")
-	c.pH = h
+	c.pubHandler = h
 }
 
 // HandleSubMsg register handler for extra sub info
 func (c *client) HandleSub(h SubHandler) {
 	lg.d("CLIENT registered sub handler")
-	c.sH = h
+	c.subHandler = h
 }
 
 // HandleUnSubMsg register handler for unsubscription error
 func (c *client) HandleUnSub(h UnSubHandler) {
 	lg.d("CLIENT registered unsub handler")
-	c.uH = h
+	c.unSubHandler = h
 }
 
 // HandleNet register handler for net error
 func (c *client) HandleNet(h NetHandler) {
 	lg.d("CLIENT registered net handler")
-	c.nH = h
+	c.netHandler = h
 }
 
 // HandleNet register handler for net error
 func (c *client) HandlePersist(h PersistHandler) {
 	lg.d("CLIENT registered persist handler")
-	c.psH = h
+	c.persistHandler = h
 }
 
 // connect to one server and start mqtt logic
@@ -519,6 +533,8 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 	})
 
 	select {
+	case <-c.ctx.Done():
+		return
 	case pkt, more := <-connImpl.netRecvC:
 		if more {
 			if pkt.Type() == CtrlConnAck {
@@ -546,11 +562,9 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 			h(server, math.MaxUint8, ErrTimeOut)
 		}
 		return
-	case <-c.exit:
-		return
 	}
 
-	lg.i("CLIENT connected server =", server)
+	lg.i("CLIENT connected to server =", server)
 	if h != nil {
 		go h(server, ConnAccepted, nil)
 	}
@@ -558,24 +572,28 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 	// login success, start mqtt logic
 	connImpl.logic()
 
-	if !c.isClosing() {
-		// reconnect
-		lg.w("CLIENT reconnecting to server =", server, "delay =", reconnectDelay)
-		time.Sleep(reconnectDelay)
-
-		if !c.isClosing() {
-			reconnectDelay = time.Duration(float64(reconnectDelay) * c.options.backoffFactor)
-			if reconnectDelay > c.options.maxDelay {
-				reconnectDelay = c.options.maxDelay
-			}
-			c.connect(server, h, reconnectDelay)
-		}
+	if c.isClosing() {
+		return
 	}
+
+	// reconnect
+	lg.e("CLIENT reconnecting to server =", server, "delay =", reconnectDelay)
+	time.Sleep(reconnectDelay)
+
+	if c.isClosing() {
+		return
+	}
+
+	reconnectDelay = time.Duration(float64(reconnectDelay) * c.options.backoffFactor)
+	if reconnectDelay > c.options.maxDelay {
+		reconnectDelay = c.options.maxDelay
+	}
+	c.connect(server, h, reconnectDelay)
 }
 
 func (c *client) isClosing() bool {
 	select {
-	case <-c.exit:
+	case <-c.ctx.Done():
 		return true
 	default:
 		return false
@@ -587,7 +605,7 @@ func (c *client) handleTopicMsg() {
 
 	for {
 		select {
-		case <-c.exit:
+		case <-c.ctx.Done():
 			return
 		case pkt, more := <-c.recvC:
 			if !more {
@@ -604,7 +622,7 @@ func (c *client) handleMsg() {
 
 	for {
 		select {
-		case <-c.exit:
+		case <-c.ctx.Done():
 			return
 		case m, more := <-c.msgC:
 			if !more {
@@ -613,24 +631,24 @@ func (c *client) handleMsg() {
 
 			switch m.what {
 			case pubMsg:
-				if c.pH != nil {
-					go c.pH(m.msg, m.err)
+				if c.pubHandler != nil {
+					go c.pubHandler(m.msg, m.err)
 				}
 			case subMsg:
-				if c.sH != nil {
-					go c.sH(m.obj.([]*Topic), m.err)
+				if c.subHandler != nil {
+					go c.subHandler(m.obj.([]*Topic), m.err)
 				}
 			case unSubMsg:
-				if c.uH != nil {
-					go c.uH(m.obj.([]string), m.err)
+				if c.unSubHandler != nil {
+					go c.unSubHandler(m.obj.([]string), m.err)
 				}
 			case netMsg:
-				if c.nH != nil {
-					go c.nH(m.msg, m.err)
+				if c.netHandler != nil {
+					go c.netHandler(m.msg, m.err)
 				}
 			case persistMsg:
-				if c.psH != nil {
-					go c.psH(m.err)
+				if c.persistHandler != nil {
+					go c.persistHandler(m.err)
 				}
 			}
 		}
