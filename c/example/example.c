@@ -113,20 +113,20 @@ void init() {
   }
   printf("create client success, client = %d\n", client);
 
-  Libmqtt_client_set_server(client, SERVER);
-  Libmqtt_client_set_log(client, LOG_LEVEL);
-  Libmqtt_client_set_clean_session(client, CLEAN_SESSION);
-  Libmqtt_client_set_keepalive(client, KEEPALIVE_INTERVAL, KEEPALIVE_FACTOR);
-  Libmqtt_client_set_identity(client, USER, PASS);
-  Libmqtt_client_set_client_id(client, CLIENT_ID);
+  Libmqtt_client_with_server(client, SERVER);
+  Libmqtt_client_with_log(client, LOG_LEVEL);
+  Libmqtt_client_with_clean_session(client, CLEAN_SESSION);
+  Libmqtt_client_with_keepalive(client, KEEPALIVE_INTERVAL, KEEPALIVE_FACTOR);
+  Libmqtt_client_with_identity(client, USER, PASS);
+  Libmqtt_client_with_client_id(client, CLIENT_ID);
   if (USE_TLS) {
-    Libmqtt_client_set_tls(client, SSL_CLIENT_CERT, SSL_CLIENT_KEY, SSL_CA_CERT, SSL_SERVER_NAME, SSL_SKIP_VERIFY);
+    Libmqtt_client_with_tls(client, SSL_CLIENT_CERT, SSL_CLIENT_KEY, SSL_CA_CERT, SSL_SERVER_NAME, SSL_SKIP_VERIFY);
   }
 }
 
 int main(int argc, char *argv[]) {
   init();
-  char *err = Libmqtt_setup(client);
+  char *err = Libmqtt_setup_client(client);
   if (err != NULL) {
     printf("client: %d error happened when setup client: %s\n", client, err);
     return 1;

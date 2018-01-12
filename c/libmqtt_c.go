@@ -18,11 +18,13 @@
 
 package main
 
-// #cgo CFLAGS: -I include
 /*
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#ifndef _LIBMQTT_CONN_H_
+#define _LIBMQTT_CONN_H_
 
 typedef enum {
   libmqtt_connack_accepted = 0,
@@ -33,6 +35,11 @@ typedef enum {
   libmqtt_connack_auth_fail = 5,
 } libmqtt_connack_t;
 
+#endif
+
+#ifndef _LIBMQTT_SUB_H_
+#define _LIBMQTT_SUB_H_
+
 typedef enum {
   libmqtt_suback_max_qos0 = 0,
   libmqtt_suback_max_qos1 = 1,
@@ -40,14 +47,10 @@ typedef enum {
   libmqtt_suback_fail = 0x80,
 } libmqtt_suback_t;
 
-typedef enum {
-  libmqtt_log_verbose = 0,
-  libmqtt_log_debug = 1,
-  libmqtt_log_info = 2,
-  libmqtt_log_warning = 3,
-  libmqtt_log_error = 4,
-  libmqtt_log_silent = 5,
-} libmqtt_log_level;
+#endif
+
+#ifndef _LIBMQTT_BRIDGE_H_
+#define _LIBMQTT_BRIDGE_H_
 
 typedef void (*libmqtt_conn_handler)
   (int client, char *server, libmqtt_connack_t code, char *err);
@@ -131,170 +134,18 @@ static inline void call_topic_handler
     free(msg);
   }
 }
+#endif
 */
 import "C"
 import (
-	"math"
 	"unsafe"
 
-	mq "github.com/goiiot/libmqtt"
+	lib "github.com/goiiot/libmqtt"
 )
 
 var (
-	clients       = make(map[int]mq.Client)
-	clientOptions = make(map[int][]mq.Option)
+	clients = make(map[int]lib.Client)
 )
-
-// Libmqtt_new_client ()
-// create a new client, return the id of client
-// if no client id available return -1
-//export Libmqtt_new_client
-func Libmqtt_new_client() C.int {
-	for id := 1; id < int(math.MaxInt64); id++ {
-		if _, ok := clientOptions[id]; !ok {
-			clientOptions[id] = make([]mq.Option, 0)
-			return C.int(id)
-		}
-	}
-	return -1
-}
-
-// Libmqtt_client_set_server (int client, char *server)
-//export Libmqtt_client_set_server
-func Libmqtt_client_set_server(client C.int, server *C.char) {
-	addOption(client, mq.WithServer(C.GoString(server)))
-}
-
-// Libmqtt_client_set_none_persist (int client)
-//export Libmqtt_client_set_none_persist
-func Libmqtt_client_set_none_persist(client C.int) {
-	addOption(client, mq.WithPersist(mq.NonePersist))
-}
-
-// Libmqtt_client_set_mem_persist (int client, int maxCount, bool dropOnExceed, bool duplicateReplace)
-//export Libmqtt_client_set_mem_persist
-func Libmqtt_client_set_mem_persist(client C.int, maxCount C.int, dropOnExceed C.bool, duplicateReplace C.bool) {
-	addOption(client, mq.WithPersist(mq.NewMemPersist(&mq.PersistStrategy{
-		MaxCount:         uint32(maxCount),
-		DropOnExceed:     bool(dropOnExceed),
-		DuplicateReplace: bool(duplicateReplace),
-	})))
-}
-
-// Libmqtt_client_set_file_persist (int client, char *dirPath, int maxCount, bool dropOnExceed, bool duplicateReplace)
-//export Libmqtt_client_set_file_persist
-func Libmqtt_client_set_file_persist(client C.int, dirPath *C.char, maxCount C.int, dropOnExceed C.bool, duplicateReplace C.bool) {
-	addOption(client, mq.WithPersist(mq.NewFilePersist(C.GoString(dirPath), &mq.PersistStrategy{
-		MaxCount:         uint32(maxCount),
-		DropOnExceed:     bool(dropOnExceed),
-		DuplicateReplace: bool(duplicateReplace),
-	})))
-}
-
-// Libmqtt_client_set_clean_session (bool flag)
-//export Libmqtt_client_set_clean_session
-func Libmqtt_client_set_clean_session(client C.int, flag C.bool) {
-	addOption(client, mq.WithCleanSession(bool(flag)))
-}
-
-// Libmqtt_client_set_client_id (int client, char * client_id)
-//export Libmqtt_client_set_client_id
-func Libmqtt_client_set_client_id(client C.int, clientID *C.char) {
-	addOption(client, mq.WithClientID(C.GoString(clientID)))
-}
-
-// Libmqtt_client_set_dial_timeout (int client, int timeout)
-//export Libmqtt_client_set_dial_timeout
-func Libmqtt_client_set_dial_timeout(client C.int, timeout C.int) {
-	addOption(client, mq.WithDialTimeout(uint16(timeout)))
-}
-
-// Libmqtt_client_set_identity (int client, char * username, char * password)
-//export Libmqtt_client_set_identity
-func Libmqtt_client_set_identity(client C.int, username, password *C.char) {
-	addOption(client, mq.WithIdentity(C.GoString(username), C.GoString(password)))
-}
-
-// Libmqtt_client_set_keepalive (int client, int keepalive, float factor)
-//export Libmqtt_client_set_keepalive
-func Libmqtt_client_set_keepalive(client C.int, keepalive C.int, factor C.float) {
-	addOption(client, mq.WithKeepalive(uint16(keepalive), float64(factor)))
-}
-
-// Libmqtt_client_set_log (int client, libmqtt_log_level l)
-//export Libmqtt_client_set_log
-func Libmqtt_client_set_log(client C.int, l C.libmqtt_log_level) {
-	level := mq.Silent
-	switch l {
-	case C.libmqtt_log_verbose:
-		level = mq.Verbose
-	case C.libmqtt_log_debug:
-		level = mq.Debug
-	case C.libmqtt_log_info:
-		level = mq.Info
-	case C.libmqtt_log_warning:
-		level = mq.Warning
-	case C.libmqtt_log_error:
-		level = mq.Error
-	case C.libmqtt_log_silent:
-		level = mq.Silent
-	}
-	addOption(client, mq.WithLog(level))
-}
-
-// Libmqtt_client_set_recv_buf (int client, int size)
-//export Libmqtt_client_set_recv_buf
-func Libmqtt_client_set_recv_buf(client C.int, size C.int) {
-	addOption(client, mq.WithRecvBuf(int(size)))
-}
-
-// Libmqtt_client_set_send_buf (int client, int size)
-//export Libmqtt_client_set_send_buf
-func Libmqtt_client_set_send_buf(client C.int, size C.int) {
-	addOption(client, mq.WithSendBuf(int(size)))
-}
-
-// Libmqtt_client_set_tls (int client, char * certFile, char * keyFile, char * caCert, char * serverNameOverride, bool skipVerify)
-// use ssl to connect
-//export Libmqtt_client_set_tls
-func Libmqtt_client_set_tls(client C.int, certFile, keyFile, caCert, serverNameOverride *C.char, skipVerify C.bool) {
-	addOption(client, mq.WithTLS(
-		C.GoString(certFile),
-		C.GoString(keyFile),
-		C.GoString(caCert),
-		C.GoString(serverNameOverride),
-		bool(skipVerify)))
-}
-
-// Libmqtt_client_set_will (int client, char *topic, int qos, bool retain, char *payload, int payloadSize)
-// mark this connection with will message
-//export Libmqtt_client_set_will
-func Libmqtt_client_set_will(client C.int, topic *C.char, qos C.int, retain C.bool, payload *C.char, payloadSize C.int) {
-	addOption(client, mq.WithWill(
-		C.GoString(topic),
-		mq.QosLevel(qos),
-		bool(retain),
-		C.GoBytes(unsafe.Pointer(payload), payloadSize)))
-}
-
-// Libmqtt_setup (int client)
-// setup the client with previously defined options
-//export Libmqtt_setup
-func Libmqtt_setup(client C.int) *C.char {
-	cid := int(client)
-	if v, ok := clientOptions[cid]; ok {
-		c, err := mq.NewClient(v...)
-		if err != nil {
-			return C.CString(err.Error())
-		}
-
-		clients[cid] = c
-	} else {
-		return C.CString("no such client")
-	}
-
-	return nil
-}
 
 // Libmqtt_handle (int client, char *topic, libmqtt_topic_handler h)
 //export Libmqtt_handle
@@ -308,20 +159,20 @@ func Libmqtt_handle(client C.int, topic *C.char, h C.libmqtt_topic_handler) {
 //export Libmqtt_connect
 func Libmqtt_connect(client C.int, h C.libmqtt_conn_handler) {
 	if c, ok := clients[int(client)]; ok {
-		c.Connect(func(server string, code mq.ConnAckCode, err error) {
+		c.Connect(func(server string, code lib.ConnAckCode, err error) {
 			var c C.libmqtt_connack_t
 			switch code {
-			case mq.ConnAccepted:
+			case lib.ConnAccepted:
 				c = C.libmqtt_connack_accepted
-			case mq.ConnBadProtocol:
+			case lib.ConnBadProtocol:
 				c = C.libmqtt_connack_bad_proto
-			case mq.ConnIDRejected:
+			case lib.ConnIDRejected:
 				c = C.libmqtt_connack_id_rejected
-			case mq.ConnServerUnavailable:
+			case lib.ConnServerUnavailable:
 				c = C.libmqtt_connack_srv_unavail
-			case mq.ConnBadIdentity:
+			case lib.ConnBadIdentity:
 				c = C.libmqtt_connack_bad_identity
-			case mq.ConnAuthFail:
+			case lib.ConnAuthFail:
 				c = C.libmqtt_connack_auth_fail
 			}
 
@@ -338,9 +189,9 @@ func Libmqtt_connect(client C.int, h C.libmqtt_conn_handler) {
 //export Libmqtt_subscribe
 func Libmqtt_subscribe(client C.int, topic *C.char, qos C.int) {
 	if c, ok := clients[int(client)]; ok {
-		c.Subscribe(&mq.Topic{
+		c.Subscribe(&lib.Topic{
 			Name: C.GoString(topic),
-			Qos:  mq.QosLevel(qos),
+			Qos:  lib.QosLevel(qos),
 		})
 	}
 }
@@ -349,9 +200,9 @@ func Libmqtt_subscribe(client C.int, topic *C.char, qos C.int) {
 //export Libmqtt_publish
 func Libmqtt_publish(client C.int, topic *C.char, qos C.int, payload *C.char, payloadSize C.int) {
 	if c, ok := clients[int(client)]; ok {
-		c.Publish(&mq.PublishPacket{
+		c.Publish(&lib.PublishPacket{
 			TopicName: C.GoString(topic),
-			Qos:       mq.QosLevel(qos),
+			Qos:       lib.QosLevel(qos),
 			Payload:   C.GoBytes(unsafe.Pointer(payload), payloadSize),
 		})
 	}
@@ -400,7 +251,7 @@ func Libmqtt_set_pub_handler(client C.int, h C.libmqtt_pub_handler) {
 //export Libmqtt_set_sub_handler
 func Libmqtt_set_sub_handler(client C.int, h C.libmqtt_sub_handler) {
 	if c, ok := clients[int(client)]; ok {
-		c.HandleSub(func(topics []*mq.Topic, err error) {
+		c.HandleSub(func(topics []*lib.Topic, err error) {
 			for _, t := range topics {
 				var er *C.char
 				if err != nil {
@@ -452,17 +303,10 @@ func Libmqtt_set_persist_handler(client C.int, h C.libmqtt_persist_handler) {
 	}
 }
 
-func wrapTopicHandler(client C.int, h C.libmqtt_topic_handler) mq.TopicHandler {
-	return func(topic string, qos mq.QosLevel, msg []byte) {
-		C.call_topic_handler(h, client, C.CString(topic), C.int(qos), (*C.char)(C.CBytes(msg)), C.int(len(msg)))
-	}
-}
-
-func addOption(client C.int, option mq.Option) {
-	cid := int(client)
-	if v, ok := clientOptions[cid]; ok {
-		v = append(v, option)
-		clientOptions[cid] = v
+func wrapTopicHandler(client C.int, h C.libmqtt_topic_handler) lib.TopicHandler {
+	return func(topic string, qos lib.QosLevel, msg []byte) {
+		C.call_topic_handler(h, client, C.CString(topic), C.int(qos),
+			(*C.char)(C.CBytes(msg)), C.int(len(msg)))
 	}
 }
 
