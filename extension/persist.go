@@ -69,12 +69,12 @@ func (r *RedisPersist) Store(key string, p lib.Packet) error {
 		return nil
 	}
 
-	if p.WriteTo(r.buf) != nil {
+	defer r.buf.Reset()
+	if lib.EncodeOnePacket(lib.V311, p, r.buf) == nil {
 		if ok, err := r.conn.HSet(r.mainKey, key, r.buf.String()).Result(); !ok {
 			return err
 		}
 	}
-	r.buf.Reset()
 
 	return nil
 }

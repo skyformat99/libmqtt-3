@@ -38,16 +38,6 @@ func (s *pingReqPacket) Type() CtrlType {
 	return CtrlPingReq
 }
 
-func (s *pingReqPacket) WriteTo(w BufferWriter) error {
-	if w == nil || s == nil {
-		return nil
-	}
-	// fixed header
-	w.WriteByte(CtrlPingReq << 4)
-	// remaining length
-	return w.WriteByte(0x00)
-}
-
 // pingRespPacket is sent by the Server to the Client in response to
 // a pingReqPacket. It indicates that the Server is alive.
 type pingRespPacket struct {
@@ -55,15 +45,4 @@ type pingRespPacket struct {
 
 func (s *pingRespPacket) Type() CtrlType {
 	return CtrlPingResp
-}
-
-func (s *pingRespPacket) WriteTo(w BufferWriter) error {
-	if w == nil || s == nil {
-		return nil
-	}
-
-	// fixed header
-	w.WriteByte(CtrlPingResp << 4)
-	// remaining length
-	return w.WriteByte(0x00)
 }

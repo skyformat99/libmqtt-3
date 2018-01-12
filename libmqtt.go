@@ -20,9 +20,6 @@ package libmqtt
 type Packet interface {
 	// Type return the packet type
 	Type() CtrlType
-
-	// WriteTo buffered writer
-	WriteTo(BufferWriter) error
 }
 
 // Topic for both topic name and topic qos

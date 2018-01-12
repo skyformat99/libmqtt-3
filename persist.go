@@ -382,7 +382,7 @@ func (m *FilePersist) store(key string, p Packet) error {
 
 	// write packet bytes to file
 	w := bufio.NewWriter(f)
-	err = p.WriteTo(w)
+	err = EncodeOnePacket(V311, p, w)
 	if err != nil {
 		println(err.Error())
 		return err

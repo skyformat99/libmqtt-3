@@ -46,7 +46,7 @@ func TestDecodeOnePacket(t *testing.T) {
 		buf.Reset()
 		switch pkt.(type) {
 		case *ConnPacket:
-			pkt.WriteTo(buf)
+			EncodeOnePacket(V311, pkt, buf)
 			pktBytes := buf.Bytes()
 			if bytes.Compare(pktBytes, targetBytes) != 0 {
 				t.Error(pktBytes)

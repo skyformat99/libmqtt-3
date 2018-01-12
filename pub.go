@@ -32,21 +32,6 @@ func (p *PublishPacket) Type() CtrlType {
 	return CtrlPublish
 }
 
-// WriteTo encode PublishPacket into buffer
-func (p *PublishPacket) WriteTo(w BufferWriter) error {
-	if w == nil || p == nil {
-		return nil
-	}
-	// fixed header
-	w.WriteByte(CtrlPublish<<4 | boolToByte(p.IsDup)<<3 | boolToByte(p.IsRetain) | p.Qos<<1)
-
-	payload := p.payload()
-	writeRemainLength(len(payload), w)
-
-	_, err := w.Write(payload)
-	return err
-}
-
 func (p *PublishPacket) payload() []byte {
 	data := encodeDataWithLen([]byte(p.TopicName))
 	if p.Qos > Qos0 {
@@ -65,21 +50,6 @@ func (p *PubAckPacket) Type() CtrlType {
 	return CtrlPubAck
 }
 
-// WriteTo encode PubAckPacket into buffer
-func (p *PubAckPacket) WriteTo(w BufferWriter) error {
-	if w == nil || p == nil {
-		return nil
-	}
-
-	// fixed header
-	w.WriteByte(CtrlPubAck << 4)
-	// remaining length
-	w.WriteByte(0x02)
-	// packet id
-	w.WriteByte(byte(p.PacketID >> 8))
-	return w.WriteByte(byte(p.PacketID))
-}
-
 // PubRecvPacket is the response to a PublishPacket with QoS 2.
 // It is the second packet of the QoS 2 protocol exchange.
 type PubRecvPacket struct {
@@ -89,21 +59,6 @@ type PubRecvPacket struct {
 // Type PubRecvPacket's type is CtrlPubRecv
 func (p *PubRecvPacket) Type() CtrlType {
 	return CtrlPubRecv
-}
-
-// WriteTo encode PubRecvPacket into buffer
-func (p *PubRecvPacket) WriteTo(w BufferWriter) error {
-	if w == nil || p == nil {
-		return nil
-	}
-
-	// fixed header
-	w.WriteByte(CtrlPubRecv << 4)
-	// remaining length
-	w.WriteByte(0x02)
-	// packet id
-	w.WriteByte(byte(p.PacketID >> 8))
-	return w.WriteByte(byte(p.PacketID))
 }
 
 // PubRelPacket is the response to a PubRecvPacket.
@@ -117,20 +72,6 @@ func (p *PubRelPacket) Type() CtrlType {
 	return CtrlPubRel
 }
 
-// WriteTo encode PubRelPacket into buffer
-func (p *PubRelPacket) WriteTo(w BufferWriter) error {
-	if w == nil || p == nil {
-		return nil
-	}
-
-	w.WriteByte(CtrlPubRel<<4 | 0x02)
-	// remaining length
-	w.WriteByte(0x02)
-	// packet id
-	w.WriteByte(byte(p.PacketID >> 8))
-	return w.WriteByte(byte(p.PacketID))
-}
-
 // PubCompPacket is the response to a PubRelPacket.
 // It is the fourth and final packet of the QoS 892 2 protocol exchange. 893
 type PubCompPacket struct {
@@ -140,18 +81,4 @@ type PubCompPacket struct {
 // Type PubCompPacket's type is CtrlPubComp
 func (p *PubCompPacket) Type() CtrlType {
 	return CtrlPubComp
-}
-
-// WriteTo encode PubCompPacket into buffer
-func (p *PubCompPacket) WriteTo(w BufferWriter) error {
-	if w == nil || p == nil {
-		return nil
-	}
-	// fixed header
-	w.WriteByte(CtrlPubComp << 4)
-	// remaining length
-	w.WriteByte(0x02)
-	// packet id
-	w.WriteByte(byte(p.PacketID >> 8))
-	return w.WriteByte(byte(p.PacketID))
 }

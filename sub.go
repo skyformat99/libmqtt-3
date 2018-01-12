@@ -19,7 +19,7 @@ package libmqtt
 // SubscribePacket is sent from the Client to the Server
 // to create one or more Subscriptions.
 //
-// Each Subscription registers a Client’strategy interest in one or more TopicNames.
+// Each Subscription registers a Client's interest in one or more TopicNames.
 // The Server sends PublishPackets to the Client in order to forward
 // Application Messages that were published to TopicNames that match these Subscriptions.
 // The SubscribePacket also specifies (for each Subscription)
@@ -29,28 +29,9 @@ type SubscribePacket struct {
 	Topics   []*Topic
 }
 
-// Type SubscribePacket'strategy type is CtrlSubscribe
+// Type SubscribePacket's type is CtrlSubscribe
 func (s *SubscribePacket) Type() CtrlType {
 	return CtrlSubscribe
-}
-
-// WriteTo encode SubscribePacket into buffer
-func (s *SubscribePacket) WriteTo(w BufferWriter) error {
-	if w == nil || s == nil {
-		return nil
-	}
-
-	// fixed header
-	w.WriteByte(CtrlSubscribe<<4 | 0x02)
-	payload := s.payload()
-	// remaining length
-	writeRemainLength(2+len(payload), w)
-	// packet id
-	w.WriteByte(byte(s.PacketID >> 8))
-	w.WriteByte(byte(s.PacketID))
-
-	_, err := w.Write(payload)
-	return err
 }
 
 func (s *SubscribePacket) payload() []byte {
@@ -75,27 +56,9 @@ type SubAckPacket struct {
 	Codes    []SubAckCode
 }
 
-// Type SubAckPacket'strategy type is CtrlSubAck
+// Type SubAckPacket's type is CtrlSubAck
 func (s *SubAckPacket) Type() CtrlType {
 	return CtrlSubAck
-}
-
-// WriteTo encode SubAckPacket into buffer
-func (s *SubAckPacket) WriteTo(w BufferWriter) error {
-	if w == nil || s == nil {
-		return nil
-	}
-	// fixed header
-	w.WriteByte(CtrlSubAck << 4)
-	// remaining length
-	payload := s.payload()
-	writeRemainLength(2+len(payload), w)
-	// packet id
-	w.WriteByte(byte(s.PacketID >> 8))
-	w.WriteByte(byte(s.PacketID))
-	// payload
-	_, err := w.Write(payload)
-	return err
 }
 
 func (s *SubAckPacket) payload() []byte {
@@ -109,28 +72,9 @@ type UnSubPacket struct {
 	TopicNames []string
 }
 
-// Type UnSubPacket'strategy type is CtrlUnSub
+// Type UnSubPacket's type is CtrlUnSub
 func (s *UnSubPacket) Type() CtrlType {
 	return CtrlUnSub
-}
-
-// WriteTo encode UnSubPacket into buffer
-func (s *UnSubPacket) WriteTo(w BufferWriter) error {
-	if w == nil || s == nil {
-		return nil
-	}
-
-	// fixed header
-	w.WriteByte(CtrlUnSub<<4 | 0x02)
-	payload := s.payload()
-	// remaining length
-	writeRemainLength(2+len(payload), w)
-	// packet id
-	w.WriteByte(byte(s.PacketID >> 8))
-	w.WriteByte(byte(s.PacketID))
-
-	_, err := w.Write(payload)
-	return err
 }
 
 func (s *UnSubPacket) payload() []byte {
@@ -149,22 +93,7 @@ type UnSubAckPacket struct {
 	PacketID uint16
 }
 
-// Type UnSubAckPacket'strategy type is CtrlUnSubAck
+// Type UnSubAckPacket's type is CtrlUnSubAck
 func (s *UnSubAckPacket) Type() CtrlType {
 	return CtrlUnSubAck
-}
-
-// WriteTo encode UnSubAckPacket into buffer
-func (s *UnSubAckPacket) WriteTo(w BufferWriter) error {
-	if w == nil || s == nil {
-		return nil
-	}
-
-	// fixed header
-	w.WriteByte(CtrlUnSubAck << 4)
-	// remaining length
-	w.WriteByte(0x02)
-	// packet id
-	w.WriteByte(byte(s.PacketID >> 8))
-	return w.WriteByte(byte(s.PacketID))
 }

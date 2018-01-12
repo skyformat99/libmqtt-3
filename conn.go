@@ -32,40 +32,9 @@ type ConnPacket struct {
 	WillMessage  []byte
 }
 
-// Type ConnPacket'strategy type is CtrlConn
+// Type ConnPacket's type is CtrlConn
 func (c *ConnPacket) Type() CtrlType {
 	return CtrlConn
-}
-
-// WriteTo encode ConnPacket to bytes
-func (c *ConnPacket) WriteTo(w BufferWriter) error {
-	if w == nil || c == nil {
-		return nil
-	}
-	// fixed header
-	// 0x01 0x00
-	w.WriteByte(CtrlConn << 4)
-
-	payload := c.payload()
-	// remaining length
-	writeRemainLength(10+len(payload), w)
-
-	// Protocol Name and level
-	// 0x00 0x04 'M' 'Q' 'T' 'T' 0x04
-	w.WriteByte(0x00)
-	w.WriteByte(0x04)
-	w.Write(mqtt)
-	w.WriteByte(V311)
-
-	// connect flags
-	w.WriteByte(c.flags())
-
-	// keepalive
-	w.WriteByte(byte(c.Keepalive >> 8))
-	w.WriteByte(byte(c.Keepalive))
-
-	_, err := w.Write(payload)
-	return err
 }
 
 func (c *ConnPacket) flags() byte {
@@ -128,25 +97,9 @@ type ConnAckPacket struct {
 	Code    ConnAckCode
 }
 
-// Type ConnAckPacket'strategy type is CtrlConnAck
+// Type ConnAckPacket's type is CtrlConnAck
 func (c *ConnAckPacket) Type() CtrlType {
 	return CtrlConnAck
-}
-
-// WriteTo encode ConnAckPacket to bytes
-func (c *ConnAckPacket) WriteTo(w BufferWriter) error {
-	if w == nil || c == nil {
-		return nil
-	}
-	// fixed header
-	// 0x02 0x00
-	w.WriteByte(CtrlConnAck << 4)
-	w.WriteByte(0x02)
-	// present flag
-	w.WriteByte(boolToByte(c.Present))
-
-	// response code
-	return w.WriteByte(c.Code)
 }
 
 var (
@@ -161,13 +114,4 @@ type disConnPacket struct {
 
 func (s *disConnPacket) Type() CtrlType {
 	return CtrlDisConn
-}
-
-func (s *disConnPacket) WriteTo(w BufferWriter) error {
-	if w == nil || s == nil {
-		return nil
-	}
-	// fixed header
-	w.WriteByte(CtrlDisConn << 4)
-	return w.WriteByte(0x00)
 }

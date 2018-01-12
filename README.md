@@ -193,7 +193,7 @@ If you would like to apply other routing strategy to the client, you can provide
 ```go
 client, err := libmqtt.NewClient(
     // ...
-    // for example, use `RegexRouter`
+    // e.g. use `RegexRouter`
     libmqtt.WithRouter(libmqtt.NewRegexRouter()),
     // ...
 )
