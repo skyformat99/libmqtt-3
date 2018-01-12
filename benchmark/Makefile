@@ -1,2 +1,2 @@
 bench:
-	go test -v -bench . -benchmem -count=1
+	go test -v -bench . -benchmem -count=5

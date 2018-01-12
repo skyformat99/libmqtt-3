@@ -22,46 +22,34 @@ import (
 
 	pah "github.com/eclipse/paho.mqtt.golang"
 	lib "github.com/goiiot/libmqtt"
-	gmq "github.com/yosssi/gmq/mqtt/client"
 )
-
-//smqM "github.com/surgemq/message"
-//smq "github.com/surgemq/surgemq/service"
 
 const (
 	testKeepalive = 3600             // prevent keepalive packet disturb
-	testServer    = "localhost:1883" // emqttd server address
+	testServer    = "localhost:1883" // emqttd broker address
 	testTopic     = "/foo"
-	testQos       = 0
-	testBufSize   = 1024 // same with gmq default
-
-	testPubCount = 1
+	testBufSize   = 100
+	testPubCount  = 100000
 )
 
 var (
 	// 256 bytes
-	testTopicMsg = []byte(
-		"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
-			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
-			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
-			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890" +
-			"1234567890" + "1234567890" + "1234567890" + "1234567890" + "1234567890",
-	)
+	testTopicMsg = []byte("bar")
 )
 
 func BenchmarkLibmqttClient(b *testing.B) {
 	b.N = testPubCount
 	b.ReportAllocs()
-	var client lib.Client
-	var err error
 
-	if client, err = lib.NewClient(
-		lib.WithLog(lib.Error),
+	client, err := lib.NewClient(
+		//lib.WithLog(lib.Verbose),
 		lib.WithServer(testServer),
 		lib.WithKeepalive(testKeepalive, 1.2),
-		lib.WithRecvBuf(testBufSize),
-		lib.WithSendBuf(testBufSize),
-		lib.WithCleanSession(true)); err != nil {
+		lib.WithRecvBuf(1),
+		lib.WithSendBuf(1),
+		lib.WithCleanSession(true))
+
+	if err != nil {
 		b.Error(err)
 	}
 
@@ -72,19 +60,16 @@ func BenchmarkLibmqttClient(b *testing.B) {
 		client.Destroy(true)
 	})
 
+	b.ResetTimer()
 	client.Connect(func(server string, code lib.ConnAckCode, err error) {
 		if err != nil {
 			b.Error(err)
 		} else if code != lib.ConnAccepted {
 			b.Error(code)
 		}
-
-		b.ResetTimer()
-		println("connected")
 		for i := 0; i < b.N; i++ {
 			client.Publish(&lib.PublishPacket{
 				TopicName: testTopic,
-				Qos:       testQos,
 				Payload:   testTopicMsg,
 			})
 		}
@@ -111,6 +96,7 @@ func BenchmarkPahoClient(b *testing.B) {
 		Store:               pah.NewMemoryStore(),
 	})
 
+	b.ResetTimer()
 	t := client.Connect()
 	if !t.Wait() {
 		b.Fail()
@@ -120,10 +106,10 @@ func BenchmarkPahoClient(b *testing.B) {
 		b.Error(err)
 	}
 
-	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		client.Publish(testTopic, 0, false, testTopicMsg)
 	}
+
 	t = client.Unsubscribe(testTopic)
 	if !t.Wait() {
 		b.Fail()
@@ -134,49 +120,3 @@ func BenchmarkPahoClient(b *testing.B) {
 
 	client.Disconnect(0)
 }
-
-func BenchmarkGmqClient(b *testing.B) {
-	b.N = testPubCount
-	b.ReportAllocs()
-
-	client := gmq.New(&gmq.Options{ErrorHandler: func(e error) {
-		if e != nil {
-			b.Error(e)
-		}
-	}})
-	if err := client.Connect(&gmq.ConnectOptions{
-		Network:      "tcp",
-		Address:      testServer,
-		KeepAlive:    testKeepalive,
-		CleanSession: true,
-	}); err != nil {
-		b.Error(err)
-	}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		if err := client.Publish(&gmq.PublishOptions{
-			QoS:       testQos,
-			TopicName: []byte(testTopic),
-			Message:   testTopicMsg,
-		}); err != nil {
-			b.Error(err)
-		}
-	}
-	if err := client.Unsubscribe(&gmq.UnsubscribeOptions{
-		TopicFilters: [][]byte{[]byte(testTopic)},
-	}); err != nil {
-		b.Error(err)
-	}
-
-	client.Terminate()
-}
-
-//func BenchmarkSurgeClient(b *testing.B) {
-//	client := &smq.Client{KeepAlive: 10}
-//	err := client.Connect(testServer, &smqM.ConnectMessage{})
-//	if err != nil {
-//		b.Log(err)
-//		b.FailNow()
-//	}
-//}

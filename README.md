@@ -1,8 +1,8 @@
 # libmqtt
 
-[![Build Status](https://travis-ci.org/goiiot/libmqtt.svg)](https://travis-ci.org/goiiot/libmqtt) [![GoDoc](https://godoc.org/github.com/goiiot/libmqtt?status.svg)](https://godoc.org/github.com/goiiot/libmqtt) [![GoReportCard](https://goreportcard.com/badge/goiiot/libmqtt)](https://goreportcard.com/report/github.com/goiiot/libmqtt)[![codecov](https://codecov.io/gh/goiiot/libmqtt/branch/master/graph/badge.svg)](https://codecov.io/gh/goiiot/libmqtt)
+[![Build Status](https://travis-ci.org/goiiot/libmqtt.svg)](https://travis-ci.org/goiiot/libmqtt) [![GoDoc](https://godoc.org/github.com/goiiot/libmqtt?status.svg)](https://godoc.org/github.com/goiiot/libmqtt) [![GoReportCard](https://goreportcard.com/badge/goiiot/libmqtt)](https://goreportcard.com/report/github.com/goiiot/libmqtt) [![codecov](https://codecov.io/gh/goiiot/libmqtt/branch/master/graph/badge.svg)](https://codecov.io/gh/goiiot/libmqtt)
 
-Feature rich modern MQTT client lib in pure Go, for `Go`, `C/C++`, `Java` and `Python`
+Feature rich modern MQTT client lib in pure Go, for `Go`, `C/C++`, `Java`
 
 ## Contents
 
@@ -17,22 +17,21 @@ Feature rich modern MQTT client lib in pure Go, for `Go`, `C/C++`, `Java` and `P
 
 ## Features
 
-1. Support MQTT v3.1.1 client (async only, support for MQTT v5 is under development)
+1. MQTT v3.1.1 client support (async only, support for MQTT v5 is under development)
 1. HTTP server like API
 1. High performance and less memory footprint (see [Benchmark](#benchmark))
 1. Customizable topic routing (see [Topic Routing](#topic-routing))
 1. Multiple Builtin session persist methods (see [Session Persist](#session-persist))
-1. [C/C++ lib](./c/), [Java lib](./java/), [Python lib - TODO](./python/), [Command line client](./cmd/) support
+1. [C/C++ lib](./c/), [Java lib](./java/), [Command line client](./cmd/) support
 1. Idiomatic Go
 
 ## Usage
 
-This project can be used as
+This package can be used as
 
 - A [Go lib](#as-a-go-lib)
 - A [C/C++ lib](#as-a-cc-lib)
 - A [Java lib](#as-a-java-lib)
-- A [Python lib](#as-a-python-lib) (TODO)
 - A [Command line client](#as-a-command-line-client)
 - [MQTT infrastructure](#as-mqtt-infrastructure)
 
@@ -72,7 +71,7 @@ __Notice__: If you would like to explore all the options available, please refer
 
 4. Register the handlers and Connect, then you are ready to pub/sub with server
 
-We recommend you to register handlers for pub, sub, unsub, net error and persist error, for they can provide you more controllability of the lifecycle of a MQTT client
+We recommend you to register handlers for pub, sub, unsub, net error and persist error, for they can provide you more controllability of the lifecycle of the client
 
 ```go
 // register handler for pub success/fail (optional, but recommended)
@@ -98,7 +97,9 @@ client.Handle("foo", func(topic string, qos libmqtt.QosLevel, msg []byte) {
 client.Handle("bar", func(topic string, qos libmqtt.QosLevel, msg []byte) {
     // handle the topic message
 })
+```
 
+```go
 // connect to server
 client.Connect(func(server string, code libmqtt.ConnAckCode, err error) {
     if err != nil {
@@ -113,7 +114,7 @@ client.Connect(func(server string, code libmqtt.ConnAckCode, err error) {
 
     // success
     // you are now connected to the `server`
-    // (the `server` is one of you have provided `servers` when create the client)
+    // (the `server` is one of your provided `servers` when create the client)
     // start your business logic here or send a signal to your logic to start
 
     // subscribe some topic(s)
@@ -129,7 +130,8 @@ client.Connect(func(server string, code libmqtt.ConnAckCode, err error) {
             TopicName: "foo",
             Qos:       libmqtt.Qos0,
             Payload:   []byte("foo data"),
-        }, &libmqtt.PublishPacket{
+        },
+        &libmqtt.PublishPacket{
             TopicName: "bar",
             Qos:       libmqtt.Qos1,
             Payload:   []byte("bar data"),
@@ -160,10 +162,6 @@ Please refer to [c - README.md](./c/README.md)
 ### As a Java lib
 
 Please refer to [java - README.md](./java/README.md)
-
-### As a Python lib
-
-TODO
 
 ### As a command line client
 
@@ -219,18 +217,19 @@ The procedure of the benchmark is as following:
 1. Create the client
 1. Connect to server
 1. Publish N times to topic `foo`
-1. Unsubsecibe topic
-1. Destroy client (a sudden disconnect without disconnect packet)
+1. Unsubsecibe topic (no subscribe, just ensure all pub message has been sent)
+1. Destroy client (without disconnect packet)
 
 The benchmark result listed below was taken on a Macbook Pro 13' (Early 2015, macOS 10.13.2), statistics inside which is the value of ten times average
 
 | Bench Name               | Pub Count | ns/op | B/op | allocs/op |
 | ------------------------ | --------- | ----- | ---- | --------- |
 | BenchmarkLibmqttClient-4 | 10000     | 12011 | 405  | 5         |
-| BenchmarkGmqClient-4     | 10000     | 16590 | 809  | 8         |
 | BenchmarkPahoClient-4    | 10000     | 32604 | 1232 | 16        |
 
 You can make the benchmark using source code from [benchmark](./benchmark/)
+
+__NOTE__: We removed benchmark for GMQ because it allows receive packet even after it has been terminated
 
 ## Extensions
 
@@ -238,9 +237,7 @@ Helpful extensions for libmqtt (see [extension](./extension/))
 
 ## RoadMap
 
-1. Full tested multiple connections in one client (High priority)
-1. Add compatibility with mqtt 5.0 (Medium priority)
-1. Export to Python (using ctypes) (Low priority)
+1. Add compatibility with mqtt 5.0 (High priority)
 
 ## LICENSE
 

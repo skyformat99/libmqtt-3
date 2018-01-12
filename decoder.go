@@ -38,20 +38,20 @@ func DecodeOnePacket(version ProtocolVersion, reader io.Reader) (Packet, error) 
 	}
 }
 
-func decodeString(data []byte) (d string, next []byte, err error) {
-	var b []byte
-	b, next, err = decodeData(data)
+func decodeString(data []byte) (string, []byte, error) {
+	b, next, err := decodeData(data)
 	if err == nil {
-		d = string(b)
+		return string(b), next, err
 	}
 
-	return
+	return "", next, err
 }
 
 func decodeData(data []byte) (d []byte, next []byte, err error) {
 	if len(data) < 2 {
 		return nil, nil, ErrDecodeBadPacket
 	}
+
 	length := int(data[0])<<8 + int(data[1])
 	if length+2 > len(data) {
 		// out of bounds
@@ -60,28 +60,24 @@ func decodeData(data []byte) (d []byte, next []byte, err error) {
 	return data[2 : length+2], data[length+2:], nil
 }
 
-func decodeRemainLength(reader io.Reader) (result int, err error) {
-	buf := make([]byte, 1)
-	_, err = io.ReadFull(reader, buf[:])
-	result = int(buf[0] & 127)
-	m := 1
-	for (buf[0] & 0x80) != 0 {
-		_, err = io.ReadFull(reader, buf[:])
-		if err != nil {
-			return
-		}
+func decodeRemainLength(reader io.Reader) int {
+	var rLength uint32
+	var multiplier uint32
+	b := make([]byte, 1)
+	for multiplier < 27 { //fix: Infinite '(digit & 128) == 1' will cause the dead loop
+		io.ReadFull(reader, b)
 
-		result += int(buf[0]&127) * m
-		m <<= 8
-
-		if m > 128*128*128 {
-			return
+		digit := b[0]
+		rLength |= uint32(digit&127) << multiplier
+		if (digit & 128) == 0 {
+			break
 		}
+		multiplier += 7
 	}
-
-	return
+	return int(rLength)
 }
 
+// decode mqtt v3.1.1 packet
 func decodeV311Packet(reader io.Reader) (Packet, error) {
 	headerBytes := make([]byte, 1)
 	var err error
@@ -89,10 +85,8 @@ func decodeV311Packet(reader io.Reader) (Packet, error) {
 		return nil, err
 	}
 
-	var bytesToRead int
-	if bytesToRead, err = decodeRemainLength(reader); err != nil {
-		return nil, err
-	} else if bytesToRead == 0 {
+	bytesToRead := decodeRemainLength(reader)
+	if bytesToRead == 0 {
 		switch headerBytes[0] >> 4 {
 		case CtrlPingReq:
 			return PingReqPacket, nil
@@ -248,10 +242,8 @@ func decodeV5Packet(reader io.Reader) (Packet, error) {
 		return nil, err
 	}
 
-	var bytesToRead int
-	if bytesToRead, err = decodeRemainLength(reader); err != nil {
-		return nil, err
-	} else if bytesToRead == 0 {
+	bytesToRead := decodeRemainLength(reader)
+	if bytesToRead == 0 {
 		switch headerBytes[0] >> 4 {
 		case CtrlPingReq:
 			return PingReqPacket, nil

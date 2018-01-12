@@ -18,6 +18,7 @@ package libmqtt
 
 import (
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -96,19 +97,19 @@ func TestFilePersist(t *testing.T) {
 		}
 	}
 
-	if p.n == 1 {
+	if atomic.LoadUint32(&p.n) == 1 {
 		t.Error()
 	}
 
 	<-time.After(750 * time.Millisecond)
 
-	if p.n == 1 {
+	if atomic.LoadUint32(&p.n) == 1 {
 		t.Error()
 	}
 
 	<-time.After(750 * time.Millisecond)
 
-	if p.n != 1 {
+	if atomic.LoadUint32(&p.n) != 1 {
 		t.Error("persist strategy failed, count =", p.n)
 	}
 

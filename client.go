@@ -206,7 +206,7 @@ func WithRouter(r TopicRouter) Option {
 // WithLog will create basic logger for log
 func WithLog(l LogLevel) Option {
 	return func(c *client) error {
-		lg = newLogger(l)
+		c.log = newLogger(l)
 		return nil
 	}
 }
@@ -282,9 +282,8 @@ type client struct {
 	idGen   *idGenerator        // Packet id generator
 	router  TopicRouter         // Topic router
 	persist PersistMethod       // Persist method
-	workers *sync.WaitGroup     // Workers (connections)
-	ctx     context.Context     // closure of this channel will signal all client worker to stop
-	exit    context.CancelFunc  // called when client exit
+	workers *sync.WaitGroup     // Workers (goroutines)
+	log     *logger             // client logger
 
 	// success/error handlers
 	pubHandler     PubHandler
@@ -292,6 +291,9 @@ type client struct {
 	unSubHandler   UnSubHandler
 	netHandler     NetHandler
 	persistHandler PersistHandler
+
+	ctx  context.Context    // closure of this channel will signal all client worker to stop
+	exit context.CancelFunc // called when client exit
 }
 
 // clientOptions is the options for client to connect, reconnect, disconnect
@@ -319,7 +321,7 @@ type clientOptions struct {
 	backoffFactor   float64
 }
 
-// defaultClient create the client with default options
+// create a client with default options
 func defaultClient() *client {
 	ctx, cancel := context.WithCancel(context.TODO())
 	return &client{
@@ -347,14 +349,14 @@ func defaultClient() *client {
 // Handle register subscription message route
 func (c *client) Handle(topic string, h TopicHandler) {
 	if h != nil {
-		lg.d("HANDLE registered topic handler, topic =", topic)
+		c.log.d("HANDLE registered topic handler, topic =", topic)
 		c.router.Handle(topic, h)
 	}
 }
 
 // Connect to all designated server
 func (c *client) Connect(h ConnHandler) {
-	lg.d("CLIENT connect to server, handler =", h)
+	c.log.d("CLIENT connect to server, handler =", h)
 
 	for _, s := range c.options.servers {
 		c.workers.Add(1)
@@ -394,13 +396,13 @@ func (c *client) Publish(msg ...*PublishPacket) {
 	}
 }
 
-// SubScribe topic(s)
+// Subscribe topic(s)
 func (c *client) Subscribe(topics ...*Topic) {
 	if c.isClosing() {
 		return
 	}
 
-	lg.d("CLIENT subscribe, topic(s) =", topics)
+	c.log.d("CLIENT subscribe, topic(s) =", topics)
 
 	s := &SubscribePacket{Topics: topics}
 	s.PacketID = c.idGen.next(s)
@@ -414,7 +416,7 @@ func (c *client) UnSubscribe(topics ...string) {
 		return
 	}
 
-	lg.d("CLIENT unsubscribe topic(s) =", topics)
+	c.log.d("CLIENT unsubscribe topic(s) =", topics)
 
 	u := &UnSubPacket{TopicNames: topics}
 	u.PacketID = c.idGen.next(u)
@@ -428,14 +430,14 @@ func (c *client) Wait() {
 		return
 	}
 
-	lg.i("CLIENT wait for all workers")
+	c.log.i("CLIENT wait for all workers")
 	c.workers.Wait()
 }
 
 // Destroy will disconnect form all server
 // If force is true, then close connection without sending a DisConnPacket
 func (c *client) Destroy(force bool) {
-	lg.d("CLIENT destroying client with force =", force)
+	c.log.d("CLIENT destroying client with force =", force)
 	if force {
 		c.exit()
 	} else {
@@ -445,31 +447,31 @@ func (c *client) Destroy(force bool) {
 
 // HandlePubMsg register handler for pub error
 func (c *client) HandlePub(h PubHandler) {
-	lg.d("CLIENT registered pub handler")
+	c.log.d("CLIENT registered pub handler")
 	c.pubHandler = h
 }
 
 // HandleSubMsg register handler for extra sub info
 func (c *client) HandleSub(h SubHandler) {
-	lg.d("CLIENT registered sub handler")
+	c.log.d("CLIENT registered sub handler")
 	c.subHandler = h
 }
 
 // HandleUnSubMsg register handler for unsubscription error
 func (c *client) HandleUnSub(h UnSubHandler) {
-	lg.d("CLIENT registered unsub handler")
+	c.log.d("CLIENT registered unsub handler")
 	c.unSubHandler = h
 }
 
 // HandleNet register handler for net error
 func (c *client) HandleNet(h NetHandler) {
-	lg.d("CLIENT registered net handler")
+	c.log.d("CLIENT registered net handler")
 	c.netHandler = h
 }
 
 // HandleNet register handler for net error
 func (c *client) HandlePersist(h PersistHandler) {
-	lg.d("CLIENT registered persist handler")
+	c.log.d("CLIENT registered persist handler")
 	c.persistHandler = h
 }
 
@@ -482,7 +484,7 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 		// with tls
 		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: c.options.dialTimeout}, "tcp", server, c.options.tlsConfig)
 		if err != nil {
-			lg.e("CLIENT connect with tls failed, err =", err, "server =", server)
+			c.log.e("CLIENT connect with tls failed, err =", err, "server =", server)
 			if h != nil {
 				h(server, math.MaxUint8, err)
 			}
@@ -492,7 +494,7 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 		// without tls
 		conn, err = net.DialTimeout("tcp", server, c.options.dialTimeout)
 		if err != nil {
-			lg.e("CLIENT connect failed, err =", err, "server =", server)
+			c.log.e("CLIENT connect failed, err =", err, "server =", server)
 			if h != nil {
 				h(server, math.MaxUint8, err)
 			}
@@ -564,7 +566,7 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 		return
 	}
 
-	lg.i("CLIENT connected to server =", server)
+	c.log.i("CLIENT connected to server =", server)
 	if h != nil {
 		go h(server, ConnAccepted, nil)
 	}
@@ -577,7 +579,7 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 	}
 
 	// reconnect
-	lg.e("CLIENT reconnecting to server =", server, "delay =", reconnectDelay)
+	c.log.e("CLIENT reconnecting to server =", server, "delay =", reconnectDelay)
 	time.Sleep(reconnectDelay)
 
 	if c.isClosing() {

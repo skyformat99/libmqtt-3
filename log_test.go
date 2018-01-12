@@ -22,11 +22,11 @@ func Test_SilentLogger(t *testing.T) {
 	if l := newLogger(Silent); l != nil {
 		t.Error("failed at silent logger")
 	} else {
-		l.v("test")
-		l.d("test")
-		l.i("test")
-		l.w("test")
-		l.e("test")
+		l.v("verbose")
+		l.d("debug")
+		l.i("info")
+		l.w("warning")
+		l.e("error")
 	}
 }
 
@@ -36,11 +36,11 @@ func Test_ErrorLogger(t *testing.T) {
 		l.info != nil || l.debug != nil || l.verbose != nil {
 		t.Error("failed at error logger")
 	} else {
-		l.v("test")
-		l.d("test")
-		l.i("test")
-		l.w("test")
-		l.e("test")
+		l.v("verbose")
+		l.d("debug")
+		l.i("info")
+		l.w("warning")
+		l.e("error")
 	}
 }
 
@@ -50,11 +50,11 @@ func Test_WarningLogger(t *testing.T) {
 		l.info != nil || l.debug != nil || l.verbose != nil {
 		t.Error("failed at warning logger")
 	} else {
-		l.v("test")
-		l.d("test")
-		l.i("test")
-		l.w("test")
-		l.e("test")
+		l.v("verbose")
+		l.d("debug")
+		l.i("info")
+		l.w("warning")
+		l.e("error")
 	}
 }
 
@@ -64,11 +64,11 @@ func Test_InfoLogger(t *testing.T) {
 		l.info == nil || l.debug != nil || l.verbose != nil {
 		t.Error("failed at info logger")
 	} else {
-		l.v("test")
-		l.d("test")
-		l.i("test")
-		l.w("test")
-		l.e("test")
+		l.v("verbose")
+		l.d("debug")
+		l.i("info")
+		l.w("warning")
+		l.e("error")
 	}
 }
 
@@ -78,11 +78,11 @@ func Test_DebugLogger(t *testing.T) {
 		l.info == nil || l.debug == nil || l.verbose != nil {
 		t.Error("failed at debug logger")
 	} else {
-		l.v("test")
-		l.d("test")
-		l.i("test")
-		l.w("test")
-		l.e("test")
+		l.v("verbose")
+		l.d("debug")
+		l.i("info")
+		l.w("warning")
+		l.e("error")
 	}
 
 }
@@ -93,10 +93,10 @@ func Test_VerboseLogger(t *testing.T) {
 		l.info == nil || l.debug == nil || l.verbose == nil {
 		t.Error("failed at verbose logger")
 	} else {
-		l.v("test")
-		l.d("test")
-		l.i("test")
-		l.w("test")
-		l.e("test")
+		l.v("verbose")
+		l.d("debug")
+		l.i("info")
+		l.w("warning")
+		l.e("error")
 	}
 }
