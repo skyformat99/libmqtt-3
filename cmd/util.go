@@ -23,7 +23,7 @@ import (
 func connHandler(server string, code mq.ConnAckCode, err error) {
 	if err != nil {
 		println("\nconnect to server error:", err)
-	} else if code != mq.ConnAccepted {
+	} else if code != mq.ConnSuccess {
 		println("\nconnection rejected by server, code:", code)
 	} else {
 		println("\nconnected to server")

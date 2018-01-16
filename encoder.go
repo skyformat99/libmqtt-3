@@ -16,7 +16,10 @@
 
 package libmqtt
 
-import "errors"
+import (
+	"encoding/binary"
+	"errors"
+)
 
 var (
 	errUnsupportedVersion = errors.New("trying encode unsupported mqtt version ")
@@ -24,7 +27,7 @@ var (
 )
 
 // encode MQTT packet to bytes according to protocol version
-func EncodeOnePacket(version ProtocolVersion, packet Packet, w BufferWriter) error {
+func EncodeOnePacket(version ProtoVersion, packet Packet, w BufferWriter) error {
 	switch version {
 	case V311:
 		return encodeV311Packet(packet, w)
@@ -132,7 +135,7 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 	case *pingRespPacket:
 		w.WriteByte(CtrlPingResp << 4)
 		return w.WriteByte(0x00)
-	case *disConnPacket:
+	case *DisConnPacket:
 		w.WriteByte(CtrlDisConn << 4)
 		return w.WriteByte(0x00)
 	}
@@ -146,59 +149,72 @@ func encodeV5Packet(pkt Packet, w BufferWriter) error {
 		return nil
 	}
 
-	switch pkt.Type() {
-	case CtrlConn:
+	switch pkt.(type) {
+	case *ConnPacket:
 		c := pkt.(*ConnPacket)
+
+		// fixed header
 		w.WriteByte(CtrlConn << 4)
+
+		props := c.Props.props()
 		payload := c.payload()
-		writeRemainLength(10+len(payload), w)
+
+		// variable header
+		writeRemainLength(10+len(payload)+len(props), w)
 		w.WriteByte(0x00)
 		w.WriteByte(0x04)
 		w.Write(mqtt)
-		w.WriteByte(V311)
+		w.WriteByte(V5)
 		w.WriteByte(c.flags())
 		w.WriteByte(byte(c.Keepalive >> 8))
 		w.WriteByte(byte(c.Keepalive))
+		writeRemainLength(len(props), w)
+		w.Write(props)
+
+		// write payloads
 		_, err := w.Write(payload)
 		return err
-	case CtrlConnAck:
+	case *ConnAckPacket:
 		c := pkt.(*ConnAckPacket)
 		w.WriteByte(CtrlConnAck << 4)
-		w.WriteByte(0x02)
+		props := c.Props.props()
+		writeRemainLength(2+len(props), w)
 		w.WriteByte(boolToByte(c.Present))
-		return w.WriteByte(c.Code)
-	case CtrlPublish:
+		w.WriteByte(c.Code)
+		_, err := w.Write(props)
+		return err
+	case *PublishPacket:
 		p := pkt.(*PublishPacket)
 		w.WriteByte(CtrlPublish<<4 | boolToByte(p.IsDup)<<3 | boolToByte(p.IsRetain) | p.Qos<<1)
 		payload := p.payload()
 		writeRemainLength(len(payload), w)
 		_, err := w.Write(payload)
 		return err
-	case CtrlPubAck:
+	case *PubAckPacket:
 		p := pkt.(*PubAckPacket)
 		w.WriteByte(CtrlPubAck << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlPubRecv:
+	case *PubRecvPacket:
 		p := pkt.(*PubRecvPacket)
 		w.WriteByte(CtrlPubRecv << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlPubRel:
+	case *PubRelPacket:
 		p := pkt.(*PubRelPacket)
 		w.WriteByte(CtrlPubRel<<4 | 0x02)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlPubComp:
+	case *PubCompPacket:
 		p := pkt.(*PubCompPacket)
 		w.WriteByte(CtrlPubComp << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
-	case CtrlSubscribe:
+	case *SubscribePacket:
 		s := pkt.(*SubscribePacket)
 		w.WriteByte(CtrlSubscribe<<4 | 0x02)
 		payload := s.payload()
@@ -207,7 +223,7 @@ func encodeV5Packet(pkt Packet, w BufferWriter) error {
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
 		return err
-	case CtrlSubAck:
+	case *SubAckPacket:
 		s := pkt.(*SubAckPacket)
 		w.WriteByte(CtrlSubAck << 4)
 		payload := s.payload()
@@ -216,7 +232,7 @@ func encodeV5Packet(pkt Packet, w BufferWriter) error {
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
 		return err
-	case CtrlUnSub:
+	case *UnSubPacket:
 		s := pkt.(*UnSubPacket)
 		w.WriteByte(CtrlUnSub<<4 | 0x02)
 		payload := s.payload()
@@ -225,22 +241,37 @@ func encodeV5Packet(pkt Packet, w BufferWriter) error {
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
 		return err
-	case CtrlUnSubAck:
+	case *UnSubAckPacket:
 		s := pkt.(*UnSubAckPacket)
 		w.WriteByte(CtrlUnSubAck << 4)
 		w.WriteByte(0x02)
 		w.WriteByte(byte(s.PacketID >> 8))
 		return w.WriteByte(byte(s.PacketID))
-	case CtrlPingReq:
+	case *pingReqPacket:
 		w.WriteByte(CtrlPingReq << 4)
 		return w.WriteByte(0x00)
-	case CtrlPingResp:
+	case *pingRespPacket:
 		w.WriteByte(CtrlPingResp << 4)
 		return w.WriteByte(0x00)
-	case CtrlDisConn:
+	case *DisConnPacket:
+		d := pkt.(*DisConnPacket)
 		w.WriteByte(CtrlDisConn << 4)
-		return w.WriteByte(0x00)
-	case CtrlAuth:
+		props := d.Props.props()
+
+		writeRemainLength(len(props)+1, w)
+		w.WriteByte(d.Code)
+		writeRemainLength(len(props), w)
+		_, err := w.Write(props)
+		return err
+	case *AuthPacket:
+		a := pkt.(*AuthPacket)
+		w.WriteByte(CtrlAuth << 4)
+		props := a.Props.props()
+		writeRemainLength(1+len(props), w)
+		w.WriteByte(a.Code)
+		writeRemainLength(len(props), w)
+		_, err := w.Write(props)
+		return err
 	}
 
 	return errEncodeBadPacket
@@ -270,4 +301,12 @@ func writeRemainLength(n int, w BufferWriter) {
 		}
 		w.WriteByte(encodedByte)
 	}
+}
+
+func putUint16(d []byte, v uint16) {
+	binary.BigEndian.PutUint16(d, v)
+}
+
+func putUint32(d []byte, v uint32) {
+	binary.BigEndian.PutUint32(d, v)
 }

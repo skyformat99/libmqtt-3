@@ -24,7 +24,7 @@ import (
 func TestDecodeRemainLength(t *testing.T) {
 	buffer := &bytes.Buffer{}
 	buffer.Write([]byte{0x04})
-	length := decodeRemainLength(buffer)
+	length, _ := decodeRemainLength(buffer)
 	if length != 0x04 {
 		t.Error(length)
 	}

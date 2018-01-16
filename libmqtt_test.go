@@ -41,7 +41,7 @@ var (
 	testPacketID uint16 = math.MaxUint16 / 2
 
 	testConnackPresent = true
-	testConnackCode    = ConnAccepted
+	testConnackCode    = ConnSuccess
 
 	testSubAckCodes = []SubAckCode{SubOkMaxQos0, SubOkMaxQos1, SubFail}
 )
@@ -57,7 +57,7 @@ var (
 	testConnAckMsg      *ConnAckPacket
 	testConnAckMsgBytes []byte
 
-	testDisConnMsg      = DisConnPacket
+	testDisConnMsg      = &DisConnPacket{}
 	testDisConnMsgBytes []byte
 )
 
@@ -65,7 +65,7 @@ func initConn() {
 	testConnWillMsg = &ConnPacket{
 		Username:     testUsername,
 		Password:     testPassword,
-		protoLevel:   testProtoVersion,
+		Version:      testProtoVersion,
 		ClientID:     testClientID,
 		CleanSession: testCleanSession,
 		IsWill:       testWill,
@@ -97,7 +97,7 @@ func initConn() {
 	testConnMsg = &ConnPacket{
 		Username:     testUsername,
 		Password:     testPassword,
-		protoLevel:   testProtoVersion,
+		Version:      testProtoVersion,
 		ClientID:     testClientID,
 		CleanSession: testCleanSession,
 		Keepalive:    testKeepalive,

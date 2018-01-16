@@ -16,6 +16,18 @@
 
 package libmqtt
 
+type UserProperties map[string][]string
+
+func (u UserProperties) encodeTo(result []byte) {
+	for k, v := range u {
+		for _, val := range v {
+			result = append(result, propKeyUserProps)
+			result = append(result, encodeDataWithLen([]byte(k))...)
+			result = append(result, encodeDataWithLen([]byte(val))...)
+		}
+	}
+}
+
 // Packet is MQTT control packet
 type Packet interface {
 	// Type return the packet type
@@ -72,14 +84,14 @@ const (
 	CtrlAuth CtrlType = 15
 )
 
-// ProtocolVersion MQTT Protocol version
-type ProtocolVersion = byte
+// ProtoVersion MQTT Protocol version
+type ProtoVersion = byte
 
 const (
 	// V311 means MQTT 3.1.1
-	V311 ProtocolVersion = 4
+	V311 ProtoVersion = 4
 	// V5 means MQTT 5
-	V5 ProtocolVersion = 5
+	V5 ProtoVersion = 5
 )
 
 // QosLevel is either 0, 1, 2
@@ -98,23 +110,7 @@ var (
 	mqtt = []byte("MQTT")
 )
 
-// ConnAckCode is connection response code from server
-type ConnAckCode = byte
-
-const (
-	// ConnAccepted client accepted by server
-	ConnAccepted ConnAckCode = 0
-	// ConnBadProtocol Protocol not supported
-	ConnBadProtocol ConnAckCode = 1
-	// ConnIDRejected Connection Id not valid
-	ConnIDRejected ConnAckCode = 2
-	// ConnServerUnavailable Server error
-	ConnServerUnavailable ConnAckCode = 3
-	// ConnBadIdentity Identity failed
-	ConnBadIdentity ConnAckCode = 4
-	// ConnAuthFail Auth failed
-	ConnAuthFail ConnAckCode = 5
-)
+type DisConnCode = byte
 
 // SubAckCode is returned by server in SubAckPacket
 type SubAckCode = byte
@@ -137,97 +133,97 @@ const (
 	//
 	// Property type: byte
 	// Packet: Will, Publish
-	payloadFormatIndicator = 1
+	propKeyPayloadFormatIndicator = 1
 
 	// MessageExpiryInterval is
 	//
 	// Property type: 4 bytes int
 	// Packet: Will, Publish
-	messageExpiryInterval = 2
+	propKeyMessageExpiryInterval = 2
 
 	// ContentType is
 	//
 	// Property type: utf-8 encoded string
 	// Packet: Will, Publish
-	contentType = 3
+	propKeyContentType = 3
 
 	// ResponseTopic is
 	//
 	// Property type: utf-8 encoded string
 	// Packet: Will, Publish
-	responseTopic = 8
+	propKeyRespTopic = 8
 
 	// CorrelationData is
 	//
 	// Property type: binary data
 	// Packet: Will, Publish
-	correlationData = 9
+	propKeyCorrelationData = 9
 
 	// SubscriptionIdentifier is
 	//
 	// Property type: variable bytes int
 	// Packet: Publish, Subscribe
-	subscriptionIdentifier = 11
+	propKeySubID = 11
 
 	// SessionExpiryInterval is
 	//
 	// Property type: 4 bytes int
 	// Packet: Connect, ConnAck, DisConn
-	sessionExpiryInterval = 17
+	propKeySessionExpiryInterval = 17
 
 	// AssignedClientIdentifier is
 	//
 	// Property type: utf-8 encoded string
 	// Packet: ConnAck
-	assignedClientIdentifier = 18
+	propKeyAssignedClientID = 18
 
 	// ServerKeepAlive is
 	//
 	// Property type: int (2 bytes)
 	// Packet: ConnAck
-	serverKeepAlive = 19
+	propKeyServerKeepalive = 19
 
 	// AuthenticationMethod is
 	//
 	// Property type: utf-8
 	// Packet: Connect, ConnAck, Auth
-	authenticationMethod = 21
+	propKeyAuthMethod = 21
 
 	// AuthenticationData is
 	//
 	// Property type: binary data
 	// Packet: Connect, ConnAck, Auth
-	authenticationData = 22
+	propKeyAuthData = 22
 
 	// RequestProblemInfo is
 	//
 	// Property type: byte
 	// Packet: Connect
-	requestProblemInfo = 23
+	propKeyReqProblemInfo = 23
 
 	// WillDelayInterval is
 	//
 	// Property type: int (4 bytes)
 	// Packet: Will
-	willDelayInterval = 24
+	propKeyWillDelayInterval = 24
 
 	// RequestResponseInfo is
 	//
 	// Property type: byte
 	// Packet: Connect
-	requestResponseInfo = 25
+	propKeyReqRespInfo = 25
 
 	// ResponseInfo is
 	//
 	// Property type: utf-8
 	// Packet: ConnAck
-	responseInfo = 26
+	propKeyRespInfo = 26
 
 	// ServerReference is
 	//
 	// Property type: utf-8 encoded string
 	// Packet: ConnAck, DisConn
-	serverReference = 28
+	propKeyServerRef = 28
 
 	// ReasonString is
 	//
@@ -235,70 +231,70 @@ const (
 	// Packet: ConnAck, PubAck, PubRecv, PubRel,
 	// 		   PubComp, SubAck, UnSubAck, DisConn,
 	// 		   Auth
-	reasonString = 31
+	propKeyReasonString = 31
 
 	// ReceiveMax is
 	//
 	// Property type: int (2 bytes)
 	// Packet: Connect, ConnAck
-	receiveMax = 33
+	propKeyMaxRecv = 33
 
-	// TopicAliasMax is
+	// MaxTopicAlias is
 	//
 	// Property type: int (2 bytes)
 	// Packet: Connect, ConnAck
-	topicAliasMax = 34
+	propKeyMaxTopicAlias = 34
 
 	// TopicAlias is
 	//
 	// Property type: int (2 bytes)
 	// Packet: Publish
-	topicAlias = 35
+	propKeyTopicAlias = 35
 
 	// MaxQos is
 	//
 	// Property type: byte
 	// Packet: ConnAck
-	maxQos = 36
+	propKeyMaxQos = 36
 
 	// RetainAvail is
 	//
 	// Property type: byte
 	// Packet: ConnAck
-	retainAvail = 37
+	propKeyRetainAvail = 37
 
-	// UserProperty is
+	// UserProperties is
 	//
 	// Property type: utf-8 string pair
 	// Packet: Connect, ConnAck, Publish, Will,
 	// 		   PubAck, PubRecv, PubRel, PubComp,
 	// 		   Subscribe, SubAck, UnSub, UnSubAck,
 	// 		   DisConn, Auth
-	userProperty = 38
+	propKeyUserProps = 38
 
 	// MaxPacketSize is
 	//
 	// Property type: int (4 bytes)
 	// Packet: Connect, ConnAck
-	maxPacketSize = 39
+	propKeyMaxPacketSize = 39
 
 	// WildcardSubscriptionAvail is
 	//
 	// Property type: byte
 	// Packet: ConnAck
-	wildcardSubscriptionAvail = 40
+	propKeyWildcardSubAvail = 40
 
 	// SubscriptionIdentifierAvailable is
 	//
 	// Property type: byte
 	// Packet: ConnAck
-	subscriptionIdentifierAvailable = 41
+	propKeySubIDAvail = 41
 
 	// SharedSubscriptionAvailable is
 	//
 	// Property type: byte
 	// Packet: ConnAck
-	sharedSubscriptionAvailable = 42
+	propKeySharedSubAvail = 42
 )
 
 // reason code
@@ -337,7 +333,7 @@ const (
 
 	// Packet: ConnAck, PubAck, PubRecv, SubAck,
 	// 		   UnSubAck, DisConn
-	UnspecifiedError = 128
+	unspecifiedError = 128
 
 	// Packet: ConnAck, DisConn
 	malformedPacket = 129

@@ -162,7 +162,7 @@ func Libmqtt_connect(client C.int, h C.libmqtt_conn_handler) {
 		c.Connect(func(server string, code lib.ConnAckCode, err error) {
 			var c C.libmqtt_connack_t
 			switch code {
-			case lib.ConnAccepted:
+			case lib.ConnSuccess:
 				c = C.libmqtt_connack_accepted
 			case lib.ConnBadProtocol:
 				c = C.libmqtt_connack_bad_proto

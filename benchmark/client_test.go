@@ -64,7 +64,7 @@ func BenchmarkLibmqttClient(b *testing.B) {
 	client.Connect(func(server string, code lib.ConnAckCode, err error) {
 		if err != nil {
 			b.Error(err)
-		} else if code != lib.ConnAccepted {
+		} else if code != lib.ConnSuccess {
 			b.Error(code)
 		}
 		for i := 0; i < b.N; i++ {

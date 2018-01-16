@@ -51,14 +51,14 @@ func TestEncodeRemainLength(t *testing.T) {
 		buf.Reset()
 	}
 
-	for i := 2097152; i <= 268435455; i++ {
-		writeRemainLength(i, buf)
-		result := buf.Bytes()
-		if len(result) != 4 {
-			t.Error("fail at level 4 target:", i, ", result:", result)
-		}
-		buf.Reset()
-	}
+	//for i := 2097152; i <= 268435455; i++ {
+	//	writeRemainLength(i, buf)
+	//	result := buf.Bytes()
+	//	if len(result) != 4 {
+	//		t.Error("fail at level 4 target:", i, ", result:", result)
+	//	}
+	//	buf.Reset()
+	//}
 }
 
 func TestEncodeOnePacket(t *testing.T) {

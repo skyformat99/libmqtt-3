@@ -116,7 +116,7 @@ func testConn(c Client, t *testing.T, afterConnSuccess func()) {
 			t.Error(err)
 		}
 
-		if code != ConnAccepted {
+		if code != ConnSuccess {
 			t.Error(code)
 		}
 

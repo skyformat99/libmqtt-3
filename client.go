@@ -212,7 +212,7 @@ func WithLog(l LogLevel) Option {
 }
 
 // WithVersion defines the mqtt protocol version to
-func withVersion(version ProtocolVersion, compromise bool) Option {
+func withVersion(version ProtoVersion, compromise bool) Option {
 	return func(c *client) error {
 		c.options.protoVersion = version
 		c.options.protoCompromise = compromise
@@ -298,24 +298,24 @@ type client struct {
 
 // clientOptions is the options for client to connect, reconnect, disconnect
 type clientOptions struct {
-	protoVersion    ProtocolVersion // mqtt protocol version
-	protoCompromise bool            // compromise to server protocol version
-	sendChanSize    int             // send channel size
-	recvChanSize    int             // recv channel size
-	servers         []string        // server address strings
-	dialTimeout     time.Duration   // dial timeout in second
-	clientID        string          // used by ConnPacket
-	username        string          // used by ConnPacket
-	password        string          // used by ConnPacket
-	keepalive       time.Duration   // used by ConnPacket (time in second)
-	keepaliveFactor float64         // used for reasonable amount time to close conn if no ping resp
-	cleanSession    bool            // used by ConnPacket
-	isWill          bool            // used by ConnPacket
-	willTopic       string          // used by ConnPacket
-	willPayload     []byte          // used by ConnPacket
-	willQos         byte            // used by ConnPacket
-	willRetain      bool            // used by ConnPacket
-	tlsConfig       *tls.Config     // tls config with client side cert
+	protoVersion    ProtoVersion  // mqtt protocol version
+	protoCompromise bool          // compromise to server protocol version
+	sendChanSize    int           // send channel size
+	recvChanSize    int           // recv channel size
+	servers         []string      // server address strings
+	dialTimeout     time.Duration // dial timeout in second
+	clientID        string        // used by ConnPacket
+	username        string        // used by ConnPacket
+	password        string        // used by ConnPacket
+	keepalive       time.Duration // used by ConnPacket (time in second)
+	keepaliveFactor float64       // used for reasonable amount time to close conn if no ping resp
+	cleanSession    bool          // used by ConnPacket
+	isWill          bool          // used by ConnPacket
+	willTopic       string        // used by ConnPacket
+	willPayload     []byte        // used by ConnPacket
+	willQos         byte          // used by ConnPacket
+	willRetain      bool          // used by ConnPacket
+	tlsConfig       *tls.Config   // tls config with client side cert
 	maxDelay        time.Duration
 	firstDelay      time.Duration
 	backoffFactor   float64
@@ -441,7 +441,7 @@ func (c *client) Destroy(force bool) {
 	if force {
 		c.exit()
 	} else {
-		c.sendC <- DisConnPacket
+		c.sendC <- &DisConnPacket{}
 	}
 }
 
@@ -541,7 +541,7 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 		if more {
 			if pkt.Type() == CtrlConnAck {
 				p := pkt.(*ConnAckPacket)
-				if p.Code != ConnAccepted {
+				if p.Code != ConnSuccess {
 					if h != nil {
 						h(server, p.Code, nil)
 					}
@@ -568,7 +568,7 @@ func (c *client) connect(server string, h ConnHandler, reconnectDelay time.Durat
 
 	c.log.i("CLIENT connected to server =", server)
 	if h != nil {
-		go h(server, ConnAccepted, nil)
+		go h(server, ConnSuccess, nil)
 	}
 
 	// login success, start mqtt logic
