@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cc.goiiot.libmqtt;
+package org.goiiot.libmqtt;
 
 import org.goiiot.libmqtt.LogLevel;
 import org.goiiot.libmqtt.PersistMethod;
@@ -25,12 +25,8 @@ public class Client {
     Callback mCallback;
     TopicMessageCallback mMainTopicCallback;
 
-    // TODO: complete separate topic message callback
-    // private Map<String, TopicMessageCallback> mTopicCallbacks;
-
     Client(int id) {
         mID = id;
-        // mTopicCallbacks = new HashMap<>();
     }
 
     public void setCallback(Callback callback) {
@@ -48,8 +44,6 @@ public class Client {
     public void handle(String topic, TopicMessageCallback callback) {
         if (callback != null) {
             LibMQTT._handle(mID, topic, callback);
-            mMainTopicCallback = callback;
-            // mTopicCallbacks.put(topic, callback);
         }
     }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cc_goiiot_libmqtt_LibMQTT.h"
+#include "org_goiiot_libmqtt_LibMQTT.h"
 #include "libmqtt.h"
 #include "handlers_jni.h"
 
@@ -23,7 +23,7 @@
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1newClient
+Java_org_goiiot_libmqtt_LibMQTT__1newClient
 (JNIEnv *env, jclass c) {
 
   return Libmqtt_new_client();
@@ -34,14 +34,14 @@ Java_cc_goiiot_libmqtt_LibMQTT__1newClient
  * Signature: (ILjava/lang/String;)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setServer
+Java_org_goiiot_libmqtt_LibMQTT__1setServer
 (JNIEnv *env, jclass c, jint id, jstring server) {
 
-  const char *srv = (*env)->GetStringUTFChars(env, server, 0);
+  auto srv = env->GetStringUTFChars(server, 0);
 
-  Libmqtt_client_with_server(id, srv);
+  Libmqtt_client_with_server(id, (char *) srv);
 
-  (*env)->ReleaseStringUTFChars(env, server, srv);
+  env->ReleaseStringUTFChars(server, srv);
 }
 
 /*
@@ -49,7 +49,7 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setServer
  * Signature: (IZ)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setCleanSession
+Java_org_goiiot_libmqtt_LibMQTT__1setCleanSession
 (JNIEnv *env, jclass c, jint id, jboolean flag) {
 
   Libmqtt_client_with_clean_session(id, flag);
@@ -60,7 +60,7 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setCleanSession
  * Signature: (IID)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setKeepalive
+Java_org_goiiot_libmqtt_LibMQTT__1setKeepalive
 (JNIEnv *env, jclass c, jint id, jint keepalive, jdouble factor) {
 
   Libmqtt_client_with_keepalive(id, keepalive, factor);
@@ -71,14 +71,14 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setKeepalive
  * Signature: (ILjava/lang/String;)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setClientID
+Java_org_goiiot_libmqtt_LibMQTT__1setClientID
 (JNIEnv *env, jclass c, jint id, jstring client_id) {
 
-  const char *cid = (*env)->GetStringUTFChars(env, client_id, 0);
+  auto cid = env->GetStringUTFChars(client_id, 0);
 
-  Libmqtt_client_with_client_id(id, cid);
+  Libmqtt_client_with_client_id(id, (char *)cid);
 
-  (*env)->ReleaseStringUTFChars(env, client_id, cid);
+  env->ReleaseStringUTFChars(client_id, cid);
 }
 
 /*
@@ -86,7 +86,7 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setClientID
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setDialTimeout
+Java_org_goiiot_libmqtt_LibMQTT__1setDialTimeout
 (JNIEnv *env, jclass c, jint id, jint timeout) {
 
   Libmqtt_client_with_dial_timeout(id, timeout);
@@ -97,16 +97,16 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setDialTimeout
  * Signature: (ILjava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setIdentity
+Java_org_goiiot_libmqtt_LibMQTT__1setIdentity
 (JNIEnv *env, jclass c, jint id, jstring username, jstring password) {
 
-  const char *user = (*env)->GetStringUTFChars(env, username, 0);
-  const char *pass = (*env)->GetStringUTFChars(env, password, 0);
+  auto user = env->GetStringUTFChars(username, 0);
+  auto pass = env->GetStringUTFChars(password, 0);
 
-  Libmqtt_client_with_identity(id, user, pass);
+  Libmqtt_client_with_identity(id, (char *)user, (char *)pass);
 
-  (*env)->ReleaseStringUTFChars(env, username, user);
-  (*env)->ReleaseStringUTFChars(env, password, pass);
+  env->ReleaseStringUTFChars(username, user);
+  env->ReleaseStringUTFChars(password, pass);
 }
 
 /*
@@ -114,10 +114,10 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setIdentity
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setLog
+Java_org_goiiot_libmqtt_LibMQTT__1setLog
 (JNIEnv *env, jclass c, jint id, jint log_level) {
 
-  Libmqtt_client_with_log(id, log_level);
+  Libmqtt_client_with_log(id, (libmqtt_log_level) log_level);
 }
 
 /*
@@ -125,7 +125,7 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setLog
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setSendBuf
+Java_org_goiiot_libmqtt_LibMQTT__1setSendBuf
 (JNIEnv *env, jclass c, jint id, jint size) {
 
   Libmqtt_client_with_send_buf(id, size);
@@ -136,7 +136,7 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setSendBuf
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setRecvBuf
+Java_org_goiiot_libmqtt_LibMQTT__1setRecvBuf
 (JNIEnv *env, jclass c, jint id, jint size) {
 
   Libmqtt_client_with_send_buf(id, size);
@@ -147,21 +147,22 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setRecvBuf
  * Signature: (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setTLS
+Java_org_goiiot_libmqtt_LibMQTT__1setTLS
 (JNIEnv *env, jclass c, jint id, jstring cert,
  jstring key, jstring ca, jstring srv_name, jboolean skip_verify) {
 
-  const char *c_cert = (*env)->GetStringUTFChars(env, cert, 0);
-  const char *c_key = (*env)->GetStringUTFChars(env, key, 0);
-  const char *c_ca = (*env)->GetStringUTFChars(env, ca, 0);
-  const char *c_srv = (*env)->GetStringUTFChars(env, srv_name, 0);
+  auto c_cert = env->GetStringUTFChars(cert, 0);
+  auto c_key = env->GetStringUTFChars(key, 0);
+  auto c_ca = env->GetStringUTFChars(ca, 0);
+  auto c_srv = env->GetStringUTFChars(srv_name, 0);
 
-  Libmqtt_client_with_tls(id, c_cert, c_key, c_ca, c_srv, skip_verify);
+  Libmqtt_client_with_tls(id, (char *)c_cert, (char *)c_key, (char *)c_ca,
+                          (char *) c_srv, skip_verify);
 
-  (*env)->ReleaseStringUTFChars(env, cert, c_cert);
-  (*env)->ReleaseStringUTFChars(env, key, c_key);
-  (*env)->ReleaseStringUTFChars(env, ca, c_ca);
-  (*env)->ReleaseStringUTFChars(env, srv_name, c_srv);
+  env->ReleaseStringUTFChars(cert, c_cert);
+  env->ReleaseStringUTFChars(key, c_key);
+  env->ReleaseStringUTFChars(ca, c_ca);
+  env->ReleaseStringUTFChars(srv_name, c_srv);
 }
 
 /*
@@ -169,18 +170,18 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setTLS
  * Signature: (ILjava/lang/String;IZ[B)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setWill
+Java_org_goiiot_libmqtt_LibMQTT__1setWill
 (JNIEnv *env, jclass c, jint id, jstring topic,
  jint qos, jboolean retain, jbyteArray payload) {
 
-  const char *c_topic = (*env)->GetStringUTFChars(env, topic, 0);
-  jsize len = (*env)->GetArrayLength(env, payload);
-  jbyte *body = (*env)->GetByteArrayElements(env, payload, 0);
+  auto c_topic = env->GetStringUTFChars(topic, 0);
+  auto len = env->GetArrayLength(payload);
+  auto body = env->GetByteArrayElements(payload, 0);
 
-  Libmqtt_client_with_will(id, c_topic, qos, retain, body, len);
+  Libmqtt_client_with_will(id, (char *) c_topic, qos, retain, (char *) body, len);
 
-  (*env)->ReleaseStringUTFChars(env, topic, c_topic);
-  (*env)->ReleaseByteArrayElements(env, payload, body, 0);
+  env->ReleaseStringUTFChars(topic, c_topic);
+  env->ReleaseByteArrayElements(payload, body, 0);
 }
 
 /*
@@ -188,7 +189,7 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setWill
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setNonePersist
+Java_org_goiiot_libmqtt_LibMQTT__1setNonePersist
 (JNIEnv *env, jclass c, jint id) {
 
   Libmqtt_client_with_none_persist(id);
@@ -199,7 +200,7 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setNonePersist
  * Signature: (IIZZ)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setMemPersist
+Java_org_goiiot_libmqtt_LibMQTT__1setMemPersist
 (JNIEnv *env, jclass c, jint id, jint max_count,
  jboolean ex_drop, jboolean dup_replace) {
 
@@ -211,15 +212,16 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setMemPersist
  * Signature: (ILjava/lang/String;IZZ)V
  */
 JNIEXPORT void JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setFilePersist
+Java_org_goiiot_libmqtt_LibMQTT__1setFilePersist
 (JNIEnv *env, jclass c, jint id, jstring dir,
  jint max_count, jboolean ex_drop, jboolean dup_replace) {
 
-  const char *c_dir = (*env)->GetStringUTFChars(env, dir, 0);
+  auto c_dir = env->GetStringUTFChars(dir, 0);
 
-  Libmqtt_client_with_file_persist(id, c_dir, max_count, ex_drop, dup_replace);
+  Libmqtt_client_with_file_persist(id, (char *) c_dir, max_count, ex_drop,
+                                   dup_replace);
 
-  (*env)->ReleaseStringUTFChars(env, dir, c_dir);
+  env->ReleaseStringUTFChars(dir, c_dir);
 }
 
 /*
@@ -227,13 +229,13 @@ Java_cc_goiiot_libmqtt_LibMQTT__1setFilePersist
  * Signature: (I)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL
-Java_cc_goiiot_libmqtt_LibMQTT__1setup
+Java_org_goiiot_libmqtt_LibMQTT__1setup
 (JNIEnv *env, jclass c, jint id) {
 
-  char *err = Libmqtt_setup_client(id);
+  auto err = Libmqtt_setup_client(id);
 
   if (err != NULL) {
-    return (*env)->NewStringUTF(env, err);
+    return env->NewStringUTF(err);
   }
 
   Libmqtt_set_pub_handler(id, &pub_handler);

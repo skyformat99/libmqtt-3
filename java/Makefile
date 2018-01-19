@@ -15,13 +15,13 @@
 C_BUILD_DIR := ../c/build
 BUILD_DIR := build
 
-JAVA_PACKAGE := cc.goiiot.libmqtt
-JAVA_PACKAGE_PATH := cc/goiiot/libmqtt
+JAVA_PACKAGE := org.goiiot.libmqtt
+JAVA_PACKAGE_PATH := org/goiiot/libmqtt
 
 JAVA_HOME ?= /Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home
-CFLAGS := -I $(C_BUILD_DIR) -I build -L $(C_BUILD_DIR)
+CFLAGS := -std=c++0x -I $(C_BUILD_DIR) -I build -L $(C_BUILD_DIR)
 
-SRC_SET := libmqtt_jni.c handlers_jni.c options_jni.c
+SRC_SET := libmqtt_jni.cpp handlers_jni.cpp options_jni.cpp
 
 # detect build system for native build
 HOST_SYSTEM = $(shell uname | cut -f 1 -d_)

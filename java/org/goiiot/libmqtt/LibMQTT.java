@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cc.goiiot.libmqtt;
+package org.goiiot.libmqtt;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -98,15 +98,6 @@ final class LibMQTT {
             return;
         }
         c.mCallback.onPersistError(err);
-    }
-
-    private static void onTopicMessage(int clientID, String topic, int qos, byte[] payload) {
-        Client c = sClientMap.get(clientID);
-        if (c == null || c.mMainTopicCallback == null) {
-            return;
-        }
-        c.mMainTopicCallback.onMessage(topic, qos, payload);
-        // TODO: deliver topic message to correct topic handler
     }
 
     static {

@@ -143,7 +143,7 @@ client.connect();
 client.waintClient();
 ```
 
-You can refer to the [example](./cc/goiiot/libmqtt/example/) for a full usage example
+You can refer to the [example](./org/goiiot/libmqtt/example/) for a full usage example
 
 ## LICENSE
 

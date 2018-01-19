@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cc.goiiot.libmqtt;
+package org.goiiot.libmqtt;
 
 public interface TopicMessageCallback {
     void onMessage(String topic, int qos, byte[] payload);

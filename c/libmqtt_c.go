@@ -21,7 +21,6 @@ package main
 /*
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #ifndef _LIBMQTT_CONN_H_
 #define _LIBMQTT_CONN_H_
@@ -227,9 +226,9 @@ func Libmqtt_wait(client C.int) {
 
 // Libmqtt_destroy (int client, bool force)
 //export Libmqtt_destroy
-func Libmqtt_destroy(client C.int, force C.bool) {
+func Libmqtt_destroy(client C.int, force bool) {
 	if c, ok := clients[int(client)]; ok {
-		c.Destroy(bool(force))
+		c.Destroy(force)
 	}
 }
 

@@ -16,6 +16,8 @@
 
 #include "libmqtt.h"
 
+static JavaVM *jvm;
+
 void conn_handler(int client, char *server, libmqtt_connack_t code, char *err);
 
 void sub_handler(int client, char *topic, int qos, char *err);
@@ -25,7 +27,5 @@ void pub_handler(int client, char *topic, char *err);
 void unsub_handler(int client, char *topic, char *err);
 
 void net_handler(int client, char *server, char *err);
-
-void topic_handler(int client, char *topic, int qos, char *payload, int size);
 
 void persist_handler(int client, char *err);

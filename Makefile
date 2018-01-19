@@ -20,9 +20,9 @@ test:
 .PHONY: all-lib c-lib java-lib py-lib \
 		clean-c-lib clean-java-lib clean-py-lib
 
-all-lib: all-lib c-lib java-lib py-lib
+all-lib: c-lib java-lib
 
-clean-all-lib: clean-c-lib clean-java-lib clean-py-lib
+clean-all-lib: clean-c-lib clean-java-lib
 
 c-lib:
 	$(MAKE) -C c lib
@@ -31,16 +31,10 @@ clean-c-lib:
 	$(MAKE) -C c clean
 
 java-lib:
-	$(MAKE) -C java lib
+	$(MAKE) -C java build
 
 clean-java-lib:
 	$(MAKE) -C java clean
-
-py-lib:
-	$(MAKE) -C python lib
-
-clean-py-lib:
-	$(MAKE) -C python clean
 
 client:
 	$(MAKE) -C cmd build

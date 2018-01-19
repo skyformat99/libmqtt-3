@@ -19,8 +19,6 @@
 package main
 
 /*
-#include <stdbool.h>
-
 #ifndef _LIBMQTT_LOG_H_
 #define _LIBMQTT_LOG_H_
 
@@ -33,7 +31,7 @@ typedef enum {
   libmqtt_log_silent = 5,
 } libmqtt_log_level;
 
-#endif
+#endif //_LIBMQTT_LOG_H_
 */
 import "C"
 import (
@@ -93,8 +91,8 @@ func Libmqtt_client_with_backoff_strategy(client C.int, firstDelay C.int, maxDel
 
 // Libmqtt_client_with_clean_session (bool flag)
 //export Libmqtt_client_with_clean_session
-func Libmqtt_client_with_clean_session(client C.int, flag C.bool) {
-	addOption(client, lib.WithCleanSession(bool(flag)))
+func Libmqtt_client_with_clean_session(client C.int, flag bool) {
+	addOption(client, lib.WithCleanSession(flag))
 }
 
 // Libmqtt_client_with_client_id (int client, char * client_id)
@@ -150,11 +148,11 @@ func Libmqtt_client_with_none_persist(client C.int) {
 
 // Libmqtt_client_with_mem_persist (int client, int maxCount, bool dropOnExceed, bool duplicateReplace)
 //export Libmqtt_client_with_mem_persist
-func Libmqtt_client_with_mem_persist(client C.int, maxCount C.int, dropOnExceed C.bool, duplicateReplace C.bool) {
+func Libmqtt_client_with_mem_persist(client C.int, maxCount C.int, dropOnExceed bool, duplicateReplace bool) {
 	addOption(client, lib.WithPersist(lib.NewMemPersist(&lib.PersistStrategy{
 		MaxCount:         uint32(maxCount),
-		DropOnExceed:     bool(dropOnExceed),
-		DuplicateReplace: bool(duplicateReplace),
+		DropOnExceed:     dropOnExceed,
+		DuplicateReplace: duplicateReplace,
 	})))
 }
 
@@ -164,11 +162,11 @@ func Libmqtt_client_with_redis_persist(client C.int) {
 
 // Libmqtt_client_with_file_persist (int client, char *dirPath, int maxCount, bool dropOnExceed, bool duplicateReplace)
 //export Libmqtt_client_with_file_persist
-func Libmqtt_client_with_file_persist(client C.int, dirPath *C.char, maxCount C.int, dropOnExceed C.bool, duplicateReplace C.bool) {
+func Libmqtt_client_with_file_persist(client C.int, dirPath *C.char, maxCount C.int, dropOnExceed bool, duplicateReplace bool) {
 	addOption(client, lib.WithPersist(lib.NewFilePersist(C.GoString(dirPath), &lib.PersistStrategy{
 		MaxCount:         uint32(maxCount),
-		DropOnExceed:     bool(dropOnExceed),
-		DuplicateReplace: bool(duplicateReplace),
+		DropOnExceed:     dropOnExceed,
+		DuplicateReplace: duplicateReplace,
 	})))
 }
 
@@ -209,23 +207,23 @@ func Libmqtt_client_with_http_router(client C.int) {
 // Libmqtt_client_with_tls (int client, char * certFile, char * keyFile, char * caCert, char * serverNameOverride, bool skipVerify)
 // use ssl to connect
 //export Libmqtt_client_with_tls
-func Libmqtt_client_with_tls(client C.int, certFile, keyFile, caCert, serverNameOverride *C.char, skipVerify C.bool) {
+func Libmqtt_client_with_tls(client C.int, certFile, keyFile, caCert, serverNameOverride *C.char, skipVerify bool) {
 	addOption(client, lib.WithTLS(
 		C.GoString(certFile),
 		C.GoString(keyFile),
 		C.GoString(caCert),
 		C.GoString(serverNameOverride),
-		bool(skipVerify)))
+		skipVerify))
 }
 
 // Libmqtt_client_with_will (int client, char *topic, int qos, bool retain, char *payload, int payloadSize)
 // mark this connection with will message
 //export Libmqtt_client_with_will
-func Libmqtt_client_with_will(client C.int, topic *C.char, qos C.int, retain C.bool, payload *C.char, payloadSize C.int) {
+func Libmqtt_client_with_will(client C.int, topic *C.char, qos C.int, retain bool, payload *C.char, payloadSize C.int) {
 	addOption(client, lib.WithWill(
 		C.GoString(topic),
 		lib.QosLevel(qos),
-		bool(retain),
+		retain,
 		C.GoBytes(unsafe.Pointer(payload), payloadSize)))
 }
 
