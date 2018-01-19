@@ -39,7 +39,7 @@ func (c *clientConn) logic() {
 	defer func() {
 		c.conn.Close()
 		c.parent.workers.Done()
-		c.parent.log.e("CONN exit logic for server =", c.name)
+		c.parent.log.e("NET exit logic for server =", c.name)
 	}()
 
 	// start keepalive if required
@@ -60,7 +60,7 @@ func (c *clientConn) logic() {
 			switch pkt.(type) {
 			case *SubAckPacket:
 				p := pkt.(*SubAckPacket)
-				c.parent.log.d("NET received SubAck, id =", p.PacketID)
+				c.parent.log.v("NET received SubAck, id =", p.PacketID)
 
 				if originPkt, ok := c.parent.idGen.getExtra(p.PacketID); ok {
 					switch originPkt.(type) {
@@ -72,7 +72,7 @@ func (c *clientConn) logic() {
 								v.Qos = p.Codes[i]
 							}
 						}
-						c.parent.log.d("CLIENT subscribed topics =", originSub.Topics)
+						c.parent.log.d("NET subscribed topics =", originSub.Topics)
 						notifyMsg(c.parent.msgC, newSubMsg(originSub.Topics, nil))
 						c.parent.idGen.free(p.PacketID)
 
@@ -82,13 +82,13 @@ func (c *clientConn) logic() {
 				}
 			case *UnSubAckPacket:
 				p := pkt.(*UnSubAckPacket)
-				c.parent.log.d("NET received UnSubAck, id =", p.PacketID)
+				c.parent.log.v("NET received UnSubAck, id =", p.PacketID)
 
 				if originPkt, ok := c.parent.idGen.getExtra(p.PacketID); ok {
 					switch originPkt.(type) {
 					case *UnSubPacket:
 						originUnSub := originPkt.(*UnSubPacket)
-						c.parent.log.d("CLIENT unSubscribed topics", originUnSub.TopicNames)
+						c.parent.log.d("NET unSubscribed topics", originUnSub.TopicNames)
 						notifyMsg(c.parent.msgC, newUnSubMsg(originUnSub.TopicNames, nil))
 						c.parent.idGen.free(p.PacketID)
 
@@ -98,7 +98,7 @@ func (c *clientConn) logic() {
 				}
 			case *PublishPacket:
 				p := pkt.(*PublishPacket)
-				c.parent.log.d("NET received publish, topic =", p.TopicName, "id =", p.PacketID, "QoS =", p.Qos)
+				c.parent.log.v("NET received publish, topic =", p.TopicName, "id =", p.PacketID, "QoS =", p.Qos)
 				// received server publish, send to client
 				c.parent.recvC <- p
 
@@ -119,14 +119,14 @@ func (c *clientConn) logic() {
 				}
 			case *PubAckPacket:
 				p := pkt.(*PubAckPacket)
-				c.parent.log.d("NET received PubAck, id =", p.PacketID)
+				c.parent.log.v("NET received PubAck, id =", p.PacketID)
 
 				if originPkt, ok := c.parent.idGen.getExtra(p.PacketID); ok {
 					switch originPkt.(type) {
 					case *PublishPacket:
 						originPub := originPkt.(*PublishPacket)
 						if originPub.Qos == Qos1 {
-							c.parent.log.d("CLIENT published qos1 packet, topic =", originPub.TopicName)
+							c.parent.log.d("NET published qos1 packet, topic =", originPub.TopicName)
 							notifyMsg(c.parent.msgC, newPubMsg(originPub.TopicName, nil))
 							c.parent.idGen.free(p.PacketID)
 
@@ -137,7 +137,7 @@ func (c *clientConn) logic() {
 				}
 			case *PubRecvPacket:
 				p := pkt.(*PubRecvPacket)
-				c.parent.log.d("NET received PubRec, id =", p.PacketID)
+				c.parent.log.v("NET received PubRec, id =", p.PacketID)
 
 				if originPkt, ok := c.parent.idGen.getExtra(p.PacketID); ok {
 					switch originPkt.(type) {
@@ -151,7 +151,7 @@ func (c *clientConn) logic() {
 				}
 			case *PubRelPacket:
 				p := pkt.(*PubRelPacket)
-				c.parent.log.d("NET send PubRel, id =", p.PacketID)
+				c.parent.log.v("NET send PubRel, id =", p.PacketID)
 
 				if originPkt, ok := c.parent.idGen.getExtra(p.PacketID); ok {
 					switch originPkt.(type) {
@@ -168,7 +168,7 @@ func (c *clientConn) logic() {
 				}
 			case *PubCompPacket:
 				p := pkt.(*PubCompPacket)
-				c.parent.log.d("NET received PubComp, id =", p.PacketID)
+				c.parent.log.v("NET received PubComp, id =", p.PacketID)
 
 				if originPkt, ok := c.parent.idGen.getExtra(p.PacketID); ok {
 					switch originPkt.(type) {
@@ -177,7 +177,7 @@ func (c *clientConn) logic() {
 						if originPub.Qos == Qos2 {
 							c.send(&PubRelPacket{PacketID: p.PacketID})
 							c.parent.log.d("NET send PubRel, id =", p.PacketID)
-							c.parent.log.d("CLIENT published qos2 packet, topic =", originPub.TopicName)
+							c.parent.log.d("NET published qos2 packet, topic =", originPub.TopicName)
 							notifyMsg(c.parent.msgC, newPubMsg(originPub.TopicName, nil))
 							c.parent.idGen.free(p.PacketID)
 
@@ -187,7 +187,7 @@ func (c *clientConn) logic() {
 					}
 				}
 			default:
-				c.parent.log.d("NET received packet, type =", pkt.Type())
+				c.parent.log.v("NET received packet, type =", pkt.Type())
 			}
 		}
 	}
@@ -203,8 +203,9 @@ func (c *clientConn) keepalive() {
 
 	defer func() {
 		t.Stop()
-		c.parent.workers.Done()
+		timeoutTimer.Stop()
 		c.parent.log.d("NET stop keepalive for server =", c.name)
+		c.parent.workers.Done()
 	}()
 
 	for {
@@ -233,9 +234,11 @@ func (c *clientConn) keepalive() {
 
 // handle mqtt logic control packet send
 func (c *clientConn) handleSend() {
+	c.parent.log.v("NET start send handle for server = ", c.name)
+
 	defer func() {
 		c.parent.workers.Done()
-		c.parent.log.e("CONN exit send handler for server =", c.name)
+		c.parent.log.e("NET exit send handler for server =", c.name)
 	}()
 
 	for {
@@ -261,7 +264,7 @@ func (c *clientConn) handleSend() {
 			case CtrlPublish:
 				p := pkt.(*PublishPacket)
 				if p.Qos == 0 {
-					c.parent.log.d("CLIENT published qos0 packet, topic =", p.TopicName)
+					c.parent.log.d("NET published qos0 packet, topic =", p.TopicName)
 					notifyMsg(c.parent.msgC, newPubMsg(p.TopicName, nil))
 				}
 			case CtrlDisConn:
@@ -306,8 +309,11 @@ func (c *clientConn) handleSend() {
 // handle all message receive
 func (c *clientConn) handleRecv() {
 	defer func() {
+		c.parent.log.e("NET exit recv handler for server =", c.name)
+		close(c.netRecvC)
+		close(c.keepaliveC)
+
 		c.parent.workers.Done()
-		c.parent.log.e("CONN exit recv handler for server =", c.name)
 	}()
 
 	for {
@@ -318,12 +324,6 @@ func (c *clientConn) handleRecv() {
 			pkt, err := DecodeOnePacket(c.parent.options.protoVersion, c.conn)
 			if err != nil {
 				c.parent.log.e("NET connection broken, server =", c.name, "err =", err)
-
-				// notify net receive no packet will coming
-				close(c.netRecvC)
-
-				// notify keepalive worker to exit
-				close(c.keepaliveC)
 
 				// TODO send proper net error to net handler
 				//if err != ErrDecodeBadPacket {
