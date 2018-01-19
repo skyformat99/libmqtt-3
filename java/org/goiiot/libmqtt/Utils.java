@@ -1,5 +1,5 @@
 /*
- * Copyright GoIIoT (https://github.com/goiiot)
+ * Copyright Go-IIoT (https://github.com/goiiot)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,9 @@
 
 package cc.goiiot.libmqtt;
 
-public interface Callback {
+final class Utils {
 
-    public void onSubResult(String topic, boolean ok, String description);
-    
-    public void onPubResult(String topic, boolean ok, String description);
-    
-    public void onUnSubResult(String topic, boolean ok, String description);
-
-    public void onConnResult(boolean ok, String description);
-    
-    public void onLost(String description);
-
-    public void onPersistError(String description);
+    static boolean isEmpty(String s) {
+        return s == null || "".equals(s) || "null".equals(s);
+    }
 }

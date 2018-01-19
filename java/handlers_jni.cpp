@@ -1,5 +1,5 @@
 /*
- * Copyright GoIIoT (https://github.com/goiiot)
+ * Copyright Go-IIoT (https://github.com/goiiot)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ void conn_handler(int client, char *server, libmqtt_connack_t code, char *err) {
   } else {
     (*g_env)->CallStaticVoidMethod(g_env, libmqtt_class,
                                    on_conn_msg_mid, client,
-                                   0,
-                                   (*g_env)->NewStringUTF(g_env, err));
+                                   0, (*g_env)->NewStringUTF(g_env, err));
   }
 }
 
@@ -53,8 +52,7 @@ void sub_handler(int client, char *topic, int qos, char *err) {
     (*g_env)->CallStaticVoidMethod(g_env, libmqtt_class,
                                    on_sub_msg_mid, client,
                                    (*g_env)->NewStringUTF(g_env, topic),
-                                   qos,
-                                   (*g_env)->NewStringUTF(g_env, err));
+                                   qos, (*g_env)->NewStringUTF(g_env, err));
   }
 }
 

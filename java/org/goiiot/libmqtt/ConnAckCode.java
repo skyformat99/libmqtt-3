@@ -1,5 +1,5 @@
 /*
- * Copyright GoIIoT (https://github.com/goiiot)
+ * Copyright Go-IIoT (https://github.com/goiiot)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package cc.goiiot.libmqtt;
 
-final class Utils {
-
-    static boolean isEmpty(String s) {
-        return s == null || "".equals(s) || "null".equals(s);
-    }
+public enum ConnectResult {
+    Accepted, Rejected, Unavailable
 }

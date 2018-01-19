@@ -1,5 +1,5 @@
 /*
- * Copyright GoIIoT (https://github.com/goiiot)
+ * Copyright Go-IIoT (https://github.com/goiiot)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package cc.goiiot.libmqtt.example;
+package org.goiiot.libmqtt.example;
 
-import cc.goiiot.libmqtt.Client;
-import cc.goiiot.libmqtt.Callback;
-import cc.goiiot.libmqtt.LogLevel;
-import cc.goiiot.libmqtt.TopicMessageCallback;
+import org.goiiot.libmqtt.Client;
+import org.goiiot.libmqtt.Callback;
+import org.goiiot.libmqtt.LogLevel;
+import org.goiiot.libmqtt.TopicMessageCallback;
 
 public class Example {
 
