@@ -16,6 +16,7 @@
 
 package libmqtt
 
+// UserProperties contains user defined properties
 type UserProperties map[string][]string
 
 func (u UserProperties) encodeTo(result []byte) {
@@ -109,8 +110,6 @@ const (
 var (
 	mqtt = []byte("MQTT")
 )
-
-type DisConnCode = byte
 
 // SubAckCode is returned by server in SubAckPacket
 type SubAckCode = byte

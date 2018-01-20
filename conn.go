@@ -101,7 +101,7 @@ type ConnProps struct {
 	// If the Session Expiry Interval is absent the value 0 is used.
 	// If it is set to 0, or is absent, the Session ends when the Network Connection is closed.
 	// If the Session Expiry Interval is 0xFFFFFFFF (UINT_MAX), the Session does not expire.
-	SessionExpiryInterval uint32 // 17
+	SessionExpiryInterval uint32
 
 	// The Client uses this value to limit the number of QoS 1 and QoS 2 publications
 	// that it is willing to process concurrently.
@@ -110,28 +110,28 @@ type ConnProps struct {
 	//
 	// The value of Receive Maximum applies only to the current Network Connection.
 	// If the Receive Maximum value is absent then its value defaults to 65,535
-	MaxRecv uint16 // 33
+	MaxRecv uint16
 
 	// The Maximum Packet Size the Client is willing to accept
 	//
 	// If the Maximum Packet Size is not present,
 	// no limit on the packet size is imposed beyond the limitations in the protocol as a result of the remaining length encoding and the protocol header sizes
-	MaxPacketSize uint32 // 39
+	MaxPacketSize uint32
 
 	// This value indicates the highest value that the Client will accept
 	// as a Topic Alias sent by the Server.
 	//
 	// The Client uses this value to limit the number of Topic Aliases that
 	// it is willing to hold on this Connection.
-	MaxTopicAlias uint16 // 33
+	MaxTopicAlias uint16
 
 	// The Client uses this value to request the Server to return Response
 	// Information in the ConnAckPacket
-	ReqRespInfo bool // 25
+	ReqRespInfo bool
 
 	// The Client uses this value to indicate whether the Reason String
 	// or User Properties are sent in the case of failures.
-	ReqProblemInfo bool // 23
+	ReqProblemInfo bool
 
 	// User defined Properties
 	UserProps UserProperties
@@ -189,12 +189,12 @@ func (c *ConnProps) props() []byte {
 		c.UserProps.encodeTo(result)
 	}
 
-	if len(c.AuthMethod) != 0 {
+	if c.AuthMethod != "" {
 		result = append(result, propKeyAuthMethod)
 		result = append(result, encodeDataWithLen([]byte(c.AuthMethod))...)
 	}
 
-	if len(c.AuthData) != 0 {
+	if c.AuthData != nil {
 		result = append(result, propKeyAuthData)
 		result = append(result, encodeDataWithLen(c.AuthData)...)
 	}
@@ -208,19 +208,19 @@ func (c *ConnProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeySessionExpiryInterval]; ok {
-		c.SessionExpiryInterval = decodeUint32(v)
+		c.SessionExpiryInterval = getUint32(v)
 	}
 
 	if v, ok := props[propKeyMaxRecv]; ok {
-		c.MaxRecv = decodeUint16(v)
+		c.MaxRecv = getUint16(v)
 	}
 
 	if v, ok := props[propKeyMaxPacketSize]; ok {
-		c.MaxPacketSize = decodeUint32(v)
+		c.MaxPacketSize = getUint32(v)
 	}
 
 	if v, ok := props[propKeyMaxTopicAlias]; ok {
-		c.MaxTopicAlias = decodeUint16(v)
+		c.MaxTopicAlias = getUint16(v)
 	}
 
 	if v, ok := props[propKeyReqRespInfo]; ok && len(v) == 1 {
@@ -232,15 +232,15 @@ func (c *ConnProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
-		c.UserProps = decodeUserProps(v)
+		c.UserProps = getUserProps(v)
 	}
 
 	if v, ok := props[propKeyAuthMethod]; ok {
-		c.AuthMethod, _, _ = decodeString(v)
+		c.AuthMethod, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyAuthData]; ok {
-		c.AuthData, _, _ = decodeData(v)
+		c.AuthData, _, _ = getBinaryData(v)
 	}
 }
 
@@ -283,7 +283,7 @@ type ConnAckProps struct {
 	// If the Session Expiry Interval is absent the value in the ConnPacket used.
 	// The server uses this property to inform the Client that it is using
 	// a value other than that sent by the Client in the ConnAck
-	SessionExpiryInterval uint32 // 17
+	SessionExpiryInterval uint32
 
 	// The Server uses this value to limit the number of QoS 1 and QoS 2 publications
 	// that it is willing to process concurrently for the Client.
@@ -334,23 +334,23 @@ type ConnAckProps struct {
 	// true means Subscription Identifiers are supported.
 	//
 	// default is true
-	SubIDAvail bool // 41
+	SubIDAvail bool
 
 	// Whether the Server supports Shared Subscriptions.
 	// false means that Shared Subscriptions are not supported.
 	// true means Shared Subscriptions are supported
 	//
 	// default is true
-	SharedSubAvail bool // 42
+	SharedSubAvail bool
 
 	// Keep Alive time assigned by the Server
-	ServerKeepalive uint16 // 19
+	ServerKeepalive uint16
 
 	// Response Information
-	RespInfo string // 26
+	RespInfo string
 
 	// Can be used by the Client to identify another Server to use
-	ServerRef string // 28
+	ServerRef string
 
 	// The name of the authentication method
 	AuthMethod string
@@ -391,7 +391,7 @@ func (c *ConnAckProps) props() []byte {
 		result = append(result, data...)
 	}
 
-	if len(c.AssignedClientID) != 0 {
+	if c.AssignedClientID != "" {
 		result = append(result, propKeyAssignedClientID)
 		result = append(result, encodeDataWithLen([]byte(c.AssignedClientID))...)
 	}
@@ -402,7 +402,7 @@ func (c *ConnAckProps) props() []byte {
 		result = append(result, data...)
 	}
 
-	if len(c.Reason) != 0 {
+	if c.Reason != "" {
 		result = append(result, propKeyReasonString)
 		result = append(result, encodeDataWithLen([]byte(c.Reason))...)
 	}
@@ -429,22 +429,22 @@ func (c *ConnAckProps) props() []byte {
 		result = append(result, data...)
 	}
 
-	if len(c.RespInfo) != 0 {
+	if c.RespInfo != "" {
 		result = append(result, propKeyRespInfo)
 		result = append(result, encodeDataWithLen([]byte(c.RespInfo))...)
 	}
 
-	if len(c.ServerRef) != 0 {
+	if c.ServerRef != "" {
 		result = append(result, propKeyServerRef)
 		result = append(result, encodeDataWithLen([]byte(c.ServerRef))...)
 	}
 
-	if len(c.AuthMethod) != 0 {
+	if c.AuthMethod != "" {
 		result = append(result, propKeyAuthMethod)
 		result = append(result, encodeDataWithLen([]byte(c.AuthMethod))...)
 	}
 
-	if len(c.AuthData) != 0 {
+	if c.AuthData != nil {
 		result = append(result, propKeyAuthData)
 		result = append(result, encodeDataWithLen(c.AuthData)...)
 	}
@@ -454,11 +454,11 @@ func (c *ConnAckProps) props() []byte {
 
 func (c *ConnAckProps) setProps(props map[byte][]byte) {
 	if v, ok := props[propKeySessionExpiryInterval]; ok {
-		c.SessionExpiryInterval = decodeUint32(v)
+		c.SessionExpiryInterval = getUint32(v)
 	}
 
 	if v, ok := props[propKeyMaxRecv]; ok {
-		c.MaxRecv = decodeUint16(v)
+		c.MaxRecv = getUint16(v)
 	}
 
 	if v, ok := props[propKeyMaxQos]; ok && len(v) == 1 {
@@ -470,23 +470,23 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyMaxPacketSize]; ok {
-		c.MaxPacketSize = decodeUint32(v)
+		c.MaxPacketSize = getUint32(v)
 	}
 
 	if v, ok := props[propKeyAssignedClientID]; ok {
-		c.AssignedClientID, _, _ = decodeString(v)
+		c.AssignedClientID, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyMaxTopicAlias]; ok {
-		c.MaxTopicAlias = decodeUint16(v)
+		c.MaxTopicAlias = getUint16(v)
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		c.Reason, _, _ = decodeString(v)
+		c.Reason, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
-		c.UserProps = decodeUserProps(v)
+		c.UserProps = getUserProps(v)
 	}
 
 	if v, ok := props[propKeyWildcardSubAvail]; ok && len(v) == 1 {
@@ -494,30 +494,34 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyServerKeepalive]; ok {
-		c.ServerKeepalive = decodeUint16(v)
+		c.ServerKeepalive = getUint16(v)
 	}
 
 	if v, ok := props[propKeyRespInfo]; ok {
-		c.RespInfo, _, _ = decodeString(v)
+		c.RespInfo, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyServerRef]; ok {
-		c.ServerRef, _, _ = decodeString(v)
+		c.ServerRef, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyAuthMethod]; ok {
-		c.AuthMethod, _, _ = decodeString(v)
+		c.AuthMethod, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyAuthData]; ok {
-		c.AuthData, _, _ = decodeData(v)
+		c.AuthData, _, _ = getBinaryData(v)
 	}
 }
+
+// DisConnCode defines disconnect reason code
+type DisConnCode = byte
 
 // DisConnPacket is the final Control Packet sent from the Client to the Server.
 // It indicates that the Client is disconnecting cleanly.
 type DisConnPacket struct {
-	Code  DisConnCode
+	Code DisConnCode
+
 	Props *DisConnProps
 }
 
@@ -532,16 +536,16 @@ type DisConnProps struct {
 	// If the Session Expiry Interval is absent, the Session Expiry Interval in the CONNECT packet is used
 	//
 	// The Session Expiry Interval MUST NOT be sent on a DISCONNECT by the Server
-	SessionExpiryInterval uint32 // 17
+	SessionExpiryInterval uint32
 
 	// Human readable, designed for diagnostics and SHOULD NOT be parsed by the receiver
-	Reason string // 31
+	Reason string
 
 	// User defines Properties
-	UserProps UserProperties // 38
+	UserProps UserProperties
 
 	// Used by the Client to identify another Server to use
-	ServerRef string // 28
+	ServerRef string
 }
 
 func (d *DisConnProps) props() []byte {
@@ -556,7 +560,7 @@ func (d *DisConnProps) props() []byte {
 		result = append(result, data...)
 	}
 
-	if len(d.Reason) != 0 {
+	if d.Reason != "" {
 		result = append(result, propKeyReasonString)
 		result = append(result, encodeDataWithLen([]byte(d.Reason))...)
 	}
@@ -565,7 +569,7 @@ func (d *DisConnProps) props() []byte {
 		d.UserProps.encodeTo(result)
 	}
 
-	if len(d.ServerRef) != 0 {
+	if d.ServerRef != "" {
 		result = append(result, propKeyServerRef)
 		result = append(result, encodeDataWithLen([]byte(d.ServerRef))...)
 	}
@@ -579,18 +583,18 @@ func (d *DisConnProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeySessionExpiryInterval]; ok {
-		d.SessionExpiryInterval = decodeUint32(v)
+		d.SessionExpiryInterval = getUint32(v)
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		d.Reason, _, _ = decodeString(v)
+		d.Reason, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
-		d.UserProps = decodeUserProps(v)
+		d.UserProps = getUserProps(v)
 	}
 
 	if v, ok := props[propKeyServerRef]; ok {
-		d.ServerRef, _, _ = decodeString(v)
+		d.ServerRef, _, _ = getString(v)
 	}
 }

@@ -250,7 +250,7 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := EncodeOnePacket(c.parent.options.protoVersion, pkt, c.connW); err != nil {
+			if err := Encode(c.parent.options.protoVersion, pkt, c.connW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}
@@ -277,7 +277,7 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := EncodeOnePacket(c.parent.options.protoVersion, pkt, c.connW); err != nil {
+			if err := Encode(c.parent.options.protoVersion, pkt, c.connW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}
@@ -321,7 +321,7 @@ func (c *clientConn) handleRecv() {
 		case <-c.parent.ctx.Done():
 			return
 		default:
-			pkt, err := DecodeOnePacket(c.parent.options.protoVersion, c.conn)
+			pkt, err := Decode(c.parent.options.protoVersion, c.conn)
 			if err != nil {
 				c.parent.log.e("NET connection broken, server =", c.name, "err =", err)
 

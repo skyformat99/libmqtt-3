@@ -31,9 +31,9 @@ import (
 )
 
 var (
-	// PacketDroppedByStrategy used when persist store packet while strategy
+	// ErrPacketDroppedByStrategy used when persist store packet while strategy
 	// don't allow that persist
-	PacketDroppedByStrategy = errors.New("packet persist dropped by strategy ")
+	ErrPacketDroppedByStrategy = errors.New("packet persist dropped by strategy ")
 )
 
 // PersistStrategy defines the details to be complied in persist methods
@@ -144,7 +144,7 @@ func (m *MemPersist) Store(key string, p Packet) error {
 		atomic.LoadUint32(&m.n) >= m.strategy.MaxCount &&
 		m.strategy.DropOnExceed {
 		// packet dropped
-		return PacketDroppedByStrategy
+		return ErrPacketDroppedByStrategy
 	}
 
 	if _, loaded := m.data.LoadOrStore(key, p); !loaded {
@@ -266,7 +266,7 @@ func (m *FilePersist) Store(key string, p Packet) error {
 	if m.strategy.MaxCount > 0 && m.strategy.DropOnExceed &&
 		atomic.LoadUint32(&m.n)+atomic.LoadUint32(&m.inMemSize) >= m.strategy.MaxCount {
 		// packet dropped
-		return PacketDroppedByStrategy
+		return ErrPacketDroppedByStrategy
 	}
 
 	if !m.exists(key) || m.strategy.DuplicateReplace {
@@ -356,7 +356,7 @@ func (m *FilePersist) getPacketFromFile(path string) (Packet, error) {
 		return nil, err
 	}
 
-	packet, err := DecodeOnePacket(V311, bytes.NewReader(content))
+	packet, err := Decode(V311, bytes.NewReader(content))
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func (m *FilePersist) store(key string, p Packet) error {
 
 	// write packet bytes to file
 	w := bufio.NewWriter(f)
-	err = EncodeOnePacket(V311, p, w)
+	err = Encode(V311, p, w)
 	if err != nil {
 		println(err.Error())
 		return err

@@ -16,6 +16,8 @@
 
 package libmqtt
 
+import "bytes"
+
 // SubscribePacket is sent from the Client to the Server
 // to create one or more Subscriptions.
 //
@@ -27,9 +29,10 @@ package libmqtt
 type SubscribePacket struct {
 	PacketID uint16
 	Topics   []*Topic
+	Props    *SubscribeProps
 }
 
-// Type SubscribePacket's type is CtrlSubscribe
+// Type of SubscribePacket is CtrlSubscribe
 func (s *SubscribePacket) Type() CtrlType {
 	return CtrlSubscribe
 }
@@ -45,6 +48,49 @@ func (s *SubscribePacket) payload() []byte {
 	return result
 }
 
+// SubscribeProps properties for SubscribePacket
+type SubscribeProps struct {
+	// SubID identifier of the subscription
+	SubID uint32
+	// UserProps User defined Properties
+	UserProps UserProperties
+}
+
+func (s *SubscribeProps) props() []byte {
+	if s == nil {
+		return nil
+	}
+
+	result := make([]byte, 0)
+
+	if s.SubID != 0 {
+		buf := &bytes.Buffer{}
+		writeVarInt(int(s.SubID), buf)
+		result = append(result, propKeySubID)
+		result = append(result, buf.Bytes()...)
+	}
+
+	if s.UserProps != nil {
+		s.UserProps.encodeTo(result)
+	}
+	return result
+}
+
+func (s *SubscribeProps) setProps(props map[byte][]byte) {
+	if s == nil || props == nil {
+		return
+	}
+
+	if v, ok := props[propKeySubID]; ok {
+		id, _ := getRemainLength(bytes.NewReader(v))
+		s.SubID = uint32(id)
+	}
+
+	if v, ok := props[propKeyUserProps]; ok {
+		s.UserProps = getUserProps(v)
+	}
+}
+
 // SubAckPacket is sent by the Server to the Client
 // to confirm receipt and processing of a SubscribePacket.
 //
@@ -54,9 +100,10 @@ func (s *SubscribePacket) payload() []byte {
 type SubAckPacket struct {
 	PacketID uint16
 	Codes    []SubAckCode
+	Props    *SubAckProps
 }
 
-// Type SubAckPacket's type is CtrlSubAck
+// Type of SubAckPacket is CtrlSubAck
 func (s *SubAckPacket) Type() CtrlType {
 	return CtrlSubAck
 }
@@ -65,14 +112,54 @@ func (s *SubAckPacket) payload() []byte {
 	return s.Codes
 }
 
+// SubAckProps properties for SubAckPacket
+type SubAckProps struct {
+	// Human readable string designed for diagnostics
+	Reason string
+
+	// UserProps User defined Properties
+	UserProps UserProperties
+}
+
+func (p *SubAckProps) props() []byte {
+	if p == nil {
+		return nil
+	}
+	result := make([]byte, 0)
+	if p.Reason != "" {
+		result = append(result, propKeyReasonString)
+		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+	}
+
+	if p.UserProps != nil {
+		p.UserProps.encodeTo(result)
+	}
+	return result
+}
+
+func (p *SubAckProps) setProps(props map[byte][]byte) {
+	if p == nil || props == nil {
+		return
+	}
+
+	if v, ok := props[propKeyReasonString]; ok {
+		p.Reason, _, _ = getString(v)
+	}
+
+	if v, ok := props[propKeyUserProps]; ok {
+		p.UserProps = getUserProps(v)
+	}
+}
+
 // UnSubPacket is sent by the Client to the Server,
 // to unsubscribe from topics.
 type UnSubPacket struct {
 	PacketID   uint16
 	TopicNames []string
+	Props      *UnSubProps
 }
 
-// Type UnSubPacket's type is CtrlUnSub
+// Type of UnSubPacket is CtrlUnSub
 func (s *UnSubPacket) Type() CtrlType {
 	return CtrlUnSub
 }
@@ -87,13 +174,80 @@ func (s *UnSubPacket) payload() []byte {
 	return result
 }
 
+// UnSubProps properties for UnSubPacket
+type UnSubProps struct {
+	// UserProps User defined Properties
+	UserProps UserProperties
+}
+
+func (p *UnSubProps) props() []byte {
+	if p == nil {
+		return nil
+	}
+	result := make([]byte, 0)
+	if p.UserProps != nil {
+		p.UserProps.encodeTo(result)
+	}
+	return result
+}
+
+func (p *UnSubProps) setProps(props map[byte][]byte) {
+	if p == nil || props == nil {
+		return
+	}
+
+	if v, ok := props[propKeyUserProps]; ok {
+		p.UserProps = getUserProps(v)
+	}
+}
+
 // UnSubAckPacket is sent by the Server to the Client to confirm
 // receipt of an UnSubPacket
 type UnSubAckPacket struct {
 	PacketID uint16
+	Props    *UnSubAckProps
 }
 
-// Type UnSubAckPacket's type is CtrlUnSubAck
+// Type of UnSubAckPacket is CtrlUnSubAck
 func (s *UnSubAckPacket) Type() CtrlType {
 	return CtrlUnSubAck
+}
+
+// UnSubAckProps properties for UnSubAckPacket
+type UnSubAckProps struct {
+	// Human readable string designed for diagnostics
+	Reason string
+
+	// UserProps User defined Properties
+	UserProps UserProperties
+}
+
+func (p *UnSubAckProps) props() []byte {
+	if p == nil {
+		return nil
+	}
+	result := make([]byte, 0)
+	if p.Reason != "" {
+		result = append(result, propKeyReasonString)
+		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+	}
+
+	if p.UserProps != nil {
+		p.UserProps.encodeTo(result)
+	}
+	return result
+}
+
+func (p *UnSubAckProps) setProps(props map[byte][]byte) {
+	if p == nil || props == nil {
+		return
+	}
+
+	if v, ok := props[propKeyReasonString]; ok {
+		p.Reason, _, _ = getString(v)
+	}
+
+	if v, ok := props[propKeyUserProps]; ok {
+		p.UserProps = getUserProps(v)
+	}
 }

@@ -167,28 +167,16 @@ func WithDialTimeout(timeout uint16) Option {
 	}
 }
 
-// WithSendBuf designate the channel size of send
-func WithSendBuf(size int) Option {
+// WithBuf designate the channel size of send and recv
+func WithBuf(sendBuf, recvBuf int) Option {
 	return func(c *client) error {
-		if size < 1 {
-			size = 1
-		} else if size > 1024 {
-			size = 1024
+		if sendBuf < 1 {
+			sendBuf = 1
 		}
-		c.options.sendChanSize = size
-		return nil
-	}
-}
-
-// WithRecvBuf designate the channel size of receive
-func WithRecvBuf(size int) Option {
-	return func(c *client) error {
-		if size < 1 {
-			size = 1
-		} else if size > 1024 {
-			size = 1024
+		if recvBuf < 1 {
+			recvBuf = 1
 		}
-		c.options.recvChanSize = size
+		c.options.sendChanSize = sendBuf
 		return nil
 	}
 }

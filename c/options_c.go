@@ -156,6 +156,7 @@ func Libmqtt_client_with_mem_persist(client C.int, maxCount C.int, dropOnExceed 
 	})))
 }
 
+// Libmqtt_client_with_redis_persist use redis as persist method
 func Libmqtt_client_with_redis_persist(client C.int) {
 
 }
@@ -170,16 +171,10 @@ func Libmqtt_client_with_file_persist(client C.int, dirPath *C.char, maxCount C.
 	})))
 }
 
-// Libmqtt_client_with_recv_buf (int client, int size)
-//export Libmqtt_client_with_recv_buf
-func Libmqtt_client_with_recv_buf(client C.int, size C.int) {
-	addOption(client, lib.WithRecvBuf(int(size)))
-}
-
-// Libmqtt_client_with_send_buf (int client, int size)
-//export Libmqtt_client_with_send_buf
-func Libmqtt_client_with_send_buf(client C.int, size C.int) {
-	addOption(client, lib.WithSendBuf(int(size)))
+// Libmqtt_client_with_buf (int client, int size)
+//export Libmqtt_client_with_buf
+func Libmqtt_client_with_buf(client C.int, sendBuf C.int, recvBuf C.int) {
+	addOption(client, lib.WithBuf(int(sendBuf), int(recvBuf)))
 }
 
 // Libmqtt_client_with_server (int client, char *server)
@@ -188,18 +183,22 @@ func Libmqtt_client_with_server(client C.int, server *C.char) {
 	addOption(client, lib.WithServer(C.GoString(server)))
 }
 
+// Libmqtt_client_with_std_router use standard router
 func Libmqtt_client_with_std_router(client C.int) {
 
 }
 
+// Libmqtt_client_with_text_router use text router
 func Libmqtt_client_with_text_router(client C.int) {
 
 }
 
+// Libmqtt_client_with_regex_router use regex matching for router
 func Libmqtt_client_with_regex_router(client C.int) {
 
 }
 
+// Libmqtt_client_with_http_router use http path router
 func Libmqtt_client_with_http_router(client C.int) {
 
 }

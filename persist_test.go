@@ -67,7 +67,7 @@ func TestMemPersist(t *testing.T) {
 
 	for i, k := range testPersistKeys {
 		if err := p.Store(k, testPersistPackets[i]); err != nil {
-			if err != PacketDroppedByStrategy {
+			if err != ErrPacketDroppedByStrategy {
 				t.Error(err)
 			}
 		}
@@ -91,7 +91,7 @@ func TestFilePersist(t *testing.T) {
 
 	for i, k := range testPersistKeys {
 		if err := p.Store(k, testPersistPackets[i]); err != nil {
-			if err != PacketDroppedByStrategy {
+			if err != ErrPacketDroppedByStrategy {
 				t.Error(err)
 			}
 		}

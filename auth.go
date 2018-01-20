@@ -51,10 +51,10 @@ func (a *AuthPacket) Type() CtrlType {
 
 // AuthProps properties of AuthPacket
 type AuthProps struct {
-	AuthMethod string         // 21
-	AuthData   []byte         // 22
-	Reason     string         // 31
-	UserProps  UserProperties // 38
+	AuthMethod string
+	AuthData   []byte
+	Reason     string
+	UserProps  UserProperties
 }
 
 func (a *AuthProps) props() []byte {
@@ -63,17 +63,17 @@ func (a *AuthProps) props() []byte {
 	}
 
 	result := make([]byte, 0)
-	if len(a.AuthMethod) != 0 {
+	if a.AuthMethod != "" {
 		result = append(result, propKeyAuthMethod)
 		result = append(result, encodeDataWithLen([]byte(a.AuthMethod))...)
 	}
 
-	if len(a.AuthData) != 0 {
+	if a.AuthData != nil {
 		result = append(result, propKeyAuthData)
 		result = append(result, encodeDataWithLen(a.AuthData)...)
 	}
 
-	if len(a.Reason) != 0 {
+	if a.Reason != "" {
 		result = append(result, propKeyReasonString)
 		result = append(result, encodeDataWithLen([]byte(a.Reason))...)
 	}
@@ -91,18 +91,18 @@ func (a *AuthProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyAuthMethod]; ok {
-		a.AuthMethod, _, _ = decodeString(v)
+		a.AuthMethod, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyAuthData]; ok {
-		a.AuthData, _, _ = decodeData(v)
+		a.AuthData, _, _ = getBinaryData(v)
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		a.Reason, _, _ = decodeString(v)
+		a.Reason, _, _ = getString(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
-		a.UserProps = decodeUserProps(v)
+		a.UserProps = getUserProps(v)
 	}
 }
