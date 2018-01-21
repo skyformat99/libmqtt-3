@@ -30,7 +30,7 @@ var (
 )
 
 // Encode MQTT packet to bytes according to protocol ProtoVersion
-func Encode(packet Packet, w BufferWriter) error {
+func Encode(packet Packet, w BufferedWriter) error {
 	switch packet.Version() {
 	case V311:
 		return encodeV311Packet(packet, w)
@@ -42,7 +42,7 @@ func Encode(packet Packet, w BufferWriter) error {
 }
 
 // encode MQTT v3.1.1 packet to writer
-func encodeV311Packet(pkt Packet, w BufferWriter) error {
+func encodeV311Packet(pkt Packet, w BufferedWriter) error {
 	if pkt == nil || w == nil {
 		return nil
 	}
@@ -145,7 +145,7 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 }
 
 // encode MQTT v5 packet to writer
-func encodeV5Packet(pkt Packet, w BufferWriter) error {
+func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 	if pkt == nil || w == nil {
 		return nil
 	}

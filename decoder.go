@@ -35,7 +35,7 @@ var (
 )
 
 // Decode will decode one mqtt packet
-func Decode(version ProtoVersion, reader io.Reader) (Packet, error) {
+func Decode(version ProtoVersion, reader BufferedReader) (Packet, error) {
 	switch version {
 	case V311:
 		return decodeV311Packet(reader)
@@ -47,13 +47,11 @@ func Decode(version ProtoVersion, reader io.Reader) (Packet, error) {
 }
 
 // decode mqtt v3.1.1 packets
-func decodeV311Packet(r io.Reader) (Packet, error) {
-	headerBytes := make([]byte, 1)
-	var err error
-	if _, err = io.ReadFull(r, headerBytes[:]); err != nil {
+func decodeV311Packet(r BufferedReader) (Packet, error) {
+	header, err := r.ReadByte()
+	if err != nil {
 		return nil, err
 	}
-	header := headerBytes[0]
 
 	bytesToRead, _ := getRemainLength(r)
 	if bytesToRead == 0 {
@@ -214,13 +212,11 @@ func decodeV311Packet(r io.Reader) (Packet, error) {
 }
 
 // decode mqtt v5 packets
-func decodeV5Packet(r io.Reader) (Packet, error) {
-	headerBytes := make([]byte, 1)
-	var err error
-	if _, err = io.ReadFull(r, headerBytes[:]); err != nil {
+func decodeV5Packet(r BufferedReader) (Packet, error) {
+	header, err := r.ReadByte()
+	if err != nil {
 		return nil, err
 	}
-	header := headerBytes[0]
 
 	bytesToRead, _ := getRemainLength(r)
 	if bytesToRead == 0 {

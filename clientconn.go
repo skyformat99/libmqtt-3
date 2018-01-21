@@ -25,14 +25,14 @@ import (
 // clientConn is the wrapper of connection to server
 // tend to actual packet send and receive
 type clientConn struct {
-	protoVersion ProtoVersion  // mqtt protocol version
-	parent       *client       // client which created this connection
-	name         string        // server addr info
-	conn         net.Conn      // connection to server
-	connW        *bufio.Writer // make buffered connection
-	logicSendC   chan Packet   // logic send channel
-	netRecvC     chan Packet   // received packet from server
-	keepaliveC   chan int      // keepalive packet
+	protoVersion ProtoVersion      // mqtt protocol version
+	parent       *client           // client which created this connection
+	name         string            // server addr info
+	conn         net.Conn          // connection to server
+	connRW       *bufio.ReadWriter // make buffered connection
+	logicSendC   chan Packet       // logic send channel
+	netRecvC     chan Packet       // received packet from server
+	keepaliveC   chan int          // keepalive packet
 }
 
 // start mqtt logic
@@ -243,12 +243,12 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := Encode(pkt, c.connW); err != nil {
+			if err := Encode(pkt, c.connRW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}
 
-			if err := c.connW.Flush(); err != nil {
+			if err := c.connRW.Flush(); err != nil {
 				c.parent.log.e("NET flush error", err)
 				return
 			}
@@ -270,12 +270,12 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := Encode(pkt, c.connW); err != nil {
+			if err := Encode(pkt, c.connRW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}
 
-			if err := c.connW.Flush(); err != nil {
+			if err := c.connRW.Flush(); err != nil {
 				c.parent.log.e("NET flush error", err)
 				return
 			}
@@ -314,7 +314,7 @@ func (c *clientConn) handleRecv() {
 		case <-c.parent.ctx.Done():
 			return
 		default:
-			pkt, err := Decode(c.parent.options.protoVersion, c.conn)
+			pkt, err := Decode(c.parent.options.protoVersion, c.connRW)
 			if err != nil {
 				c.parent.log.e("NET connection broken, server =", c.name, "err =", err)
 

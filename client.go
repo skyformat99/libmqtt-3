@@ -503,7 +503,7 @@ func (c *client) connect(server string, h ConnHandler, version ProtoVersion, rec
 		parent:       c,
 		name:         server,
 		conn:         conn,
-		connW:        bufio.NewWriter(conn),
+		connRW:       bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)),
 		keepaliveC:   make(chan int),
 		logicSendC:   make(chan Packet),
 		netRecvC:     make(chan Packet),

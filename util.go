@@ -25,10 +25,16 @@ import (
 	"sync"
 )
 
-// BufferWriter buffered writer, e.g. bufio.Writer, bytes.Buffer
-type BufferWriter interface {
+// BufferedWriter buffered writer, e.g. bufio.Writer, bytes.Buffer
+type BufferedWriter interface {
 	io.Writer
 	io.ByteWriter
+}
+
+// BufferedReader buffered reader, e.g. bufio.Reader, bytes.Buffer
+type BufferedReader interface {
+	io.Reader
+	io.ByteReader
 }
 
 func boolToByte(flag bool) byte {
@@ -89,7 +95,7 @@ func encodeDataWithLen(data []byte) []byte {
 	return append(result, data...)
 }
 
-func writeVarInt(n int, w BufferWriter) {
+func writeVarInt(n int, w BufferedWriter) {
 	if n < 0 || n > maxMsgSize {
 		return
 	}
@@ -131,19 +137,20 @@ func getBinaryData(data []byte) ([]byte, []byte, error) {
 	return data[2 : length+2], data[length+2:], nil
 }
 
-func getRemainLength(r io.Reader) (int, int) {
+func getRemainLength(r io.ByteReader) (int, int) {
 	var length, m uint32
-	b := make([]byte, 1)
 	for m < 27 {
-		io.ReadFull(r, b)
-
-		digit := b[0]
-		length |= uint32(digit&127) << m
-		if (digit & 128) == 0 {
+		b, err := r.ReadByte()
+		if err != nil {
+			return 0, 0
+		}
+		length |= uint32(b&127) << m
+		if (b & 128) == 0 {
 			break
 		}
 		m += 7
 	}
+
 	return int(length), int(m/7 + 1)
 }
 
