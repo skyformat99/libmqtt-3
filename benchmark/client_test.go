@@ -29,11 +29,10 @@ const (
 	testServer    = "localhost:1883" // emqttd broker address
 	testTopic     = "/foo"
 	testBufSize   = 100
-	testPubCount  = 1000000
+	testPubCount  = 100000
 )
 
 var (
-	// 256 bytes
 	testTopicMsg = []byte("bar")
 )
 

@@ -24,6 +24,7 @@ package libmqtt
 // an AUTH packet if the ConnPacket did not contain the
 // same Authentication Method
 type AuthPacket struct {
+	basePacket
 	Code  byte       // the authentication result code
 	Props *AuthProps // authentication properties
 }
@@ -31,6 +32,10 @@ type AuthPacket struct {
 // Type of AuthPacket is CtrlAuth
 func (a *AuthPacket) Type() CtrlType {
 	return CtrlAuth
+}
+
+func (a *AuthPacket) Bytes() []byte {
+	return a.bytes(a)
 }
 
 // AuthProps properties of AuthPacket

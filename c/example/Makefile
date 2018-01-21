@@ -46,7 +46,7 @@ endif
 ARCHIVE_TARGET := $(TARGET)-a
 SHARED_TARGET := $(TARGET)-so
 
-build-single:
+build:
 	$(CC) $(CFLAGS) -o $(ARCHIVE_TARGET) \
 		example.c $(BUILD_DIR)/libmqtt.a $(PLATFORM_FLAGS)
 	$(CC) $(CFLAGS) -o $(SHARED_TARGET) \

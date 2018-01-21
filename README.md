@@ -12,7 +12,6 @@ Feature rich modern MQTT library in pure Go, for `Go`, `C/C++`, `Java`
 - [Session Persist](#session-persist)
 - [Benchmark](#benchmark)
 - [Extensions](#extensions)
-- [RoadMap](#roadmap)
 - [LICENSE](#license)
 
 ## Features
@@ -150,8 +149,8 @@ client.UnSubscribe("foo", "bar")
 6. Destroy the client when you would like to
 
 ```go
-// passing true to Destroy means a immediate disconnect to server
-// while passing false will try to send a DisConn packet to server
+// use true for a immediate disconnect to server
+// use false to send a DisConn packet to server before disconnect
 client.Destroy(true)
 ```
 
@@ -172,18 +171,18 @@ Please refer to [cmd - README.md](./cmd/README.md)
 This package can also be used as MQTT packet encoder and decoder
 
 ```go
-// decode one mqtt packet from reader
-packet, err := libmqtt.DecodeOnePacket(libmqtt.V311, reader)
+// decode one mqtt 3.1.1 packet from reader
+packet, err := libmqtt.Decode(libmqtt.V311, reader)
 // ...
 
-// encode one mqtt packet to buffer writer
-err := libmqtt.EncodeOnePacket(libmqtt.V311, packet, bufferWriter)
+// encode one mqtt packet to buffered writer
+err := libmqtt.Encode(packet, bufferWriter)
 // ...
 ```
 
 ## Topic Routing
 
-Routing topics is one of the most important thing when it comes to business logics, we currently have built two `TopicRouter`s which is ready to use, they are `TextRouter` and `RegexRouter`
+Routing topics is one of the most important thing when it comes to business logic, we currently have built two `TopicRouter`s which is ready to use, they are `TextRouter` and `RegexRouter`
 
 - `TextRouter` will match the exact same topic which was registered to client by `Handle` method. (this is the default router in a client)
 - `RegexRouter` will go through all the registered topic handlers, and use regular expression to test whether that is matched and should dispatch to the handler
@@ -204,9 +203,9 @@ client, err := libmqtt.NewClient(
 Per MQTT Specification, session state should be persisted and be recovered when next time connected to server without clean session flag set, currently we provide persist method as following:
 
 1. `NonePersist` - no session persist
-1. `MemPersist` - in memory session persist
-1. `FilePersist` - files session persist (with write barrier)
-1. `RedisPersist` - redis session persist (available inside [github.com/goiiot/libmqtt/extension](./extension/) package)
+1. `memPersist` - in memory session persist
+1. `filePersist` - files session persist (with write barrier)
+1. `redisPersist` - redis session persist (available inside [github.com/goiiot/libmqtt/extension](./extension/) package)
 
 __Note__: Use `RedisPersist` if possible.
 
@@ -217,10 +216,10 @@ The procedure of the benchmark is as following:
 1. Create the client
 1. Connect to server
 1. Publish N times to topic `foo`
-1. Unsubsecibe topic (no subscribe, just ensure all pub message has been sent)
+1. Unsubscribe topic (no subscribe, just ensure all pub message has been sent)
 1. Destroy client (without disconnect packet)
 
-The benchmark result listed below was taken on a Macbook Pro 13' (Early 2015, macOS 10.13.2), statistics inside which is the value of ten times average
+The benchmark result listed below was taken on a MacBook Pro 13' (Early 2015, macOS 10.13.2), statistics inside which is the value of ten times average
 
 | Bench Name               | Pub Count | ns/op | B/op | allocs/op |
 | ------------------------ | --------- | ----- | ---- | --------- |
@@ -229,15 +228,9 @@ The benchmark result listed below was taken on a Macbook Pro 13' (Early 2015, ma
 
 You can make the benchmark using source code from [benchmark](./benchmark/)
 
-__NOTE__: We removed benchmark for GMQ because it allows receive packet even after it has been terminated
-
 ## Extensions
 
 Helpful extensions for libmqtt (see [extension](./extension/))
-
-## RoadMap
-
-1. Add compatibility with mqtt 5.0 (High priority)
 
 ## LICENSE
 

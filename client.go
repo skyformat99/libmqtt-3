@@ -199,7 +199,7 @@ func WithLog(l LogLevel) Option {
 	}
 }
 
-// WithVersion defines the mqtt protocol version in use
+// WithVersion defines the mqtt protocol ProtoVersion in use
 func WithVersion(version ProtoVersion, compromise bool) Option {
 	return func(c *client) error {
 		c.options.protoVersion = version
@@ -286,8 +286,8 @@ type client struct {
 
 // clientOptions is the options for client to connect, reconnect, disconnect
 type clientOptions struct {
-	protoVersion    ProtoVersion  // mqtt protocol version
-	protoCompromise bool          // compromise to server protocol version
+	protoVersion    ProtoVersion  // mqtt protocol ProtoVersion
+	protoCompromise bool          // compromise to server protocol ProtoVersion
 	sendChanSize    int           // send channel size
 	recvChanSize    int           // recv channel size
 	servers         []string      // server address strings
@@ -466,6 +466,8 @@ func (c *client) HandlePersist(h PersistHandler) {
 
 // connect to one server and start mqtt logic
 func (c *client) connect(server string, h ConnHandler, version ProtoVersion, reconnectDelay time.Duration) {
+	defer c.workers.Done()
+
 	var conn net.Conn
 	var err error
 
@@ -490,20 +492,21 @@ func (c *client) connect(server string, h ConnHandler, version ProtoVersion, rec
 			return
 		}
 	}
+	defer conn.Close()
 
 	if c.isClosing() {
-		conn.Close()
 		return
 	}
 
 	connImpl := &clientConn{
-		parent:     c,
-		name:       server,
-		conn:       conn,
-		connW:      bufio.NewWriter(conn),
-		keepaliveC: make(chan int),
-		logicSendC: make(chan Packet),
-		netRecvC:   make(chan Packet),
+		protoVersion: version,
+		parent:       c,
+		name:         server,
+		conn:         conn,
+		connW:        bufio.NewWriter(conn),
+		keepaliveC:   make(chan int),
+		logicSendC:   make(chan Packet),
+		netRecvC:     make(chan Packet),
 	}
 
 	c.workers.Add(2)
@@ -529,36 +532,39 @@ func (c *client) connect(server string, h ConnHandler, version ProtoVersion, rec
 	case pkt, more := <-connImpl.netRecvC:
 		if !more {
 			if h != nil {
-				h(server, math.MaxUint8, ErrDecodeBadPacket)
+				go h(server, math.MaxUint8, ErrDecodeBadPacket)
 			}
+			close(connImpl.logicSendC)
 			return
 		}
 
 		if pkt.Type() == CtrlConnAck {
 			p := pkt.(*ConnAckPacket)
 
-			if version > V311 && c.options.protoCompromise &&
-				p.Code == CodeUnsupportedProtoVersion {
-				version--
-
-				// TODO handle protocol downgrade reconnect
-			}
-
 			if p.Code != CodeSuccess {
+				close(connImpl.logicSendC)
+				if version > V311 && c.options.protoCompromise && p.Code == CodeUnsupportedProtoVersion {
+					c.workers.Add(1)
+					go c.connect(server, h, version-1, reconnectDelay)
+					return
+				}
+
 				if h != nil {
-					h(server, p.Code, nil)
+					go h(server, p.Code, nil)
 				}
 				return
 			}
 		} else {
+			close(connImpl.logicSendC)
 			if h != nil {
-				h(server, math.MaxUint8, ErrDecodeBadPacket)
+				go h(server, math.MaxUint8, ErrDecodeBadPacket)
 			}
 			return
 		}
 	case <-time.After(c.options.dialTimeout):
+		close(connImpl.logicSendC)
 		if h != nil {
-			h(server, math.MaxUint8, ErrTimeOut)
+			go h(server, math.MaxUint8, ErrTimeOut)
 		}
 		return
 	}

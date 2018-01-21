@@ -81,7 +81,7 @@ func BenchmarkFuncDecode(b *testing.B) {
 	b.N = 100000000
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := Encode(V311, pkt, buf); err != nil {
+		if err := Encode(pkt, buf); err != nil {
 			b.Log(err)
 			b.Fail()
 		}

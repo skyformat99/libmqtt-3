@@ -20,10 +20,10 @@ import (
 	mq "github.com/goiiot/libmqtt"
 )
 
-func connHandler(server string, code mq.ConnAckCode, err error) {
+func connHandler(server string, code byte, err error) {
 	if err != nil {
 		println("\nconnect to server error:", err)
-	} else if code != mq.ConnSuccess {
+	} else if code != mq.CodeSuccess {
 		println("\nconnection rejected by server, code:", code)
 	} else {
 		println("\nconnected to server")

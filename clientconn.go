@@ -25,20 +25,20 @@ import (
 // clientConn is the wrapper of connection to server
 // tend to actual packet send and receive
 type clientConn struct {
-	parent     *client       // client which created this connection
-	name       string        // server addr info
-	conn       net.Conn      // connection to server
-	connW      *bufio.Writer // make buffered connection
-	logicSendC chan Packet   // logic send channel
-	netRecvC   chan Packet   // received packet from server
-	keepaliveC chan int      // keepalive packet
+	protoVersion ProtoVersion  // mqtt protocol version
+	parent       *client       // client which created this connection
+	name         string        // server addr info
+	conn         net.Conn      // connection to server
+	connW        *bufio.Writer // make buffered connection
+	logicSendC   chan Packet   // logic send channel
+	netRecvC     chan Packet   // received packet from server
+	keepaliveC   chan int      // keepalive packet
 }
 
 // start mqtt logic
 func (c *clientConn) logic() {
 	defer func() {
 		c.conn.Close()
-		c.parent.workers.Done()
 		c.parent.log.e("NET exit logic for server =", c.name)
 	}()
 
@@ -243,7 +243,7 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := Encode(c.parent.options.protoVersion, pkt, c.connW); err != nil {
+			if err := Encode(pkt, c.connW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}
@@ -270,7 +270,7 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := Encode(c.parent.options.protoVersion, pkt, c.connW); err != nil {
+			if err := Encode(pkt, c.connW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}

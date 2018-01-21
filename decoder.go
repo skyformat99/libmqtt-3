@@ -26,11 +26,11 @@ var (
 	ErrDecodeBadPacket = errors.New("decoded none MQTT packet ")
 
 	// ErrDecodeNoneV311Packet is the error happened when
-	// trying to decode mqtt 3.1.1 packet but got other mqtt packet version
+	// trying to decode mqtt 3.1.1 packet but got other mqtt packet ProtoVersion
 	ErrDecodeNoneV311Packet = errors.New("decoded none MQTT v3.1.1 packet ")
 
 	// ErrDecodeNoneV5Packet is the error happened when
-	// trying to decode mqtt 5 packet but got other mqtt packet version
+	// trying to decode mqtt 5 packet but got other mqtt packet ProtoVersion
 	ErrDecodeNoneV5Packet = errors.New("decoded none MQTT v5 packet ")
 )
 
@@ -83,7 +83,7 @@ func decodeV311Packet(r io.Reader) (Packet, error) {
 			return nil, err
 		}
 
-		if body[0] != V311 {
+		if body[0] != byte(V311) {
 			return nil, ErrDecodeNoneV311Packet
 		}
 
@@ -92,37 +92,38 @@ func decodeV311Packet(r io.Reader) (Packet, error) {
 		}
 		hasUsername := body[1]&0x80 == 0x80
 		hasPassword := body[1]&0x40 == 0x40
-		tmpPkt := &ConnPacket{
+		pkt := &ConnPacket{
 			ProtoName:    protocol,
-			Version:      body[0],
 			CleanSession: body[1]&0x02 == 0x02,
 			IsWill:       body[1]&0x04 == 0x04,
 			WillQos:      body[1] & 0x18 >> 3,
 			WillRetain:   body[1]&0x20 == 0x20,
 			Keepalive:    getUint16(body[2:4]),
 		}
-		if tmpPkt.ClientID, body, err = getString(body[4:]); err != nil {
+		pkt.ProtoVersion = ProtoVersion(body[0])
+
+		if pkt.ClientID, body, err = getString(body[4:]); err != nil {
 			return nil, err
 		}
 
-		if tmpPkt.IsWill {
-			tmpPkt.WillTopic, body, err = getString(body)
-			tmpPkt.WillMessage, body, err = getBinaryData(body)
+		if pkt.IsWill {
+			pkt.WillTopic, body, err = getString(body)
+			pkt.WillMessage, body, err = getBinaryData(body)
 		}
 
 		if hasUsername {
-			tmpPkt.Username, body, err = getString(body)
+			pkt.Username, body, err = getString(body)
 		}
 
 		if hasPassword {
-			tmpPkt.Password, _, err = getString(body)
+			pkt.Password, _, err = getString(body)
 		}
 
 		if err != nil {
 			return nil, err
 		}
 
-		return tmpPkt, nil
+		return pkt, nil
 	case CtrlConnAck:
 		return &ConnAckPacket{Present: body[0]&0x01 == 0x01, Code: body[1]}, nil
 	case CtrlPublish:
@@ -247,7 +248,7 @@ func decodeV5Packet(r io.Reader) (Packet, error) {
 			return nil, err
 		}
 
-		if next[0] != V5 {
+		if next[0] != byte(V5) {
 			return nil, ErrDecodeNoneV5Packet
 		}
 
@@ -259,7 +260,6 @@ func decodeV5Packet(r io.Reader) (Packet, error) {
 		hasPassword := next[1]&0x40 == 0x40
 		pkt := &ConnPacket{
 			ProtoName:    protocol,
-			Version:      next[0],
 			CleanSession: next[1]&0x02 == 0x02,
 			IsWill:       next[1]&0x04 == 0x04,
 			WillQos:      next[1] & 0x18 >> 3,
@@ -267,6 +267,7 @@ func decodeV5Packet(r io.Reader) (Packet, error) {
 			Keepalive:    getUint16(next[2:4]),
 			Props:        &ConnProps{},
 		}
+		pkt.ProtoVersion = ProtoVersion(body[0])
 
 		// read properties
 		var props map[byte][]byte

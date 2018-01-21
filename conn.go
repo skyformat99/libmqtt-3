@@ -18,8 +18,8 @@ package libmqtt
 
 // ConnPacket is the first packet sent by Client to Server
 type ConnPacket struct {
+	basePacket
 	ProtoName string
-	Version   ProtoVersion
 
 	// Flags
 
@@ -43,6 +43,10 @@ type ConnPacket struct {
 // Type ConnPacket's type is CtrlConn
 func (c *ConnPacket) Type() CtrlType {
 	return CtrlConn
+}
+
+func (c *ConnPacket) Bytes() []byte {
+	return c.bytes(c)
 }
 
 func (c *ConnPacket) flags() byte {
@@ -249,6 +253,7 @@ func (c *ConnProps) setProps(props map[byte][]byte) {
 //
 // The first packet sent from the Server to the Client MUST be a ConnAckPacket
 type ConnAckPacket struct {
+	basePacket
 	Present bool
 	Code    byte
 	Props   *ConnAckProps
@@ -257,6 +262,10 @@ type ConnAckPacket struct {
 // Type ConnAckPacket's type is CtrlConnAck
 func (c *ConnAckPacket) Type() CtrlType {
 	return CtrlConnAck
+}
+
+func (c *ConnAckPacket) Bytes() []byte {
+	return c.bytes(c)
 }
 
 // ConnAckProps defines connect acknowledge properties
@@ -498,6 +507,7 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 // DisConnPacket is the final Control Packet sent from the Client to the Server.
 // It indicates that the Client is disconnecting cleanly.
 type DisConnPacket struct {
+	basePacket
 	Code  byte
 	Props *DisConnProps
 }
@@ -505,6 +515,10 @@ type DisConnPacket struct {
 // Type of DisConnPacket is CtrlDisConn
 func (d *DisConnPacket) Type() CtrlType {
 	return CtrlDisConn
+}
+
+func (d *DisConnPacket) Bytes() []byte {
+	return d.bytes(d)
 }
 
 // DisConnProps properties for DisConnPacket

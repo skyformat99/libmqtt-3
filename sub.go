@@ -27,6 +27,7 @@ import "bytes"
 // The SubscribePacket also specifies (for each Subscription)
 // the maximum QoS with which the Server can send Application Messages to the Client
 type SubscribePacket struct {
+	basePacket
 	PacketID uint16
 	Topics   []*Topic
 	Props    *SubscribeProps
@@ -35,6 +36,10 @@ type SubscribePacket struct {
 // Type of SubscribePacket is CtrlSubscribe
 func (s *SubscribePacket) Type() CtrlType {
 	return CtrlSubscribe
+}
+
+func (s *SubscribePacket) Bytes() []byte {
+	return s.bytes(s)
 }
 
 func (s *SubscribePacket) payload() []byte {
@@ -98,6 +103,7 @@ func (s *SubscribeProps) setProps(props map[byte][]byte) {
 // that specify the maximum QoS level that was granted in
 // each Subscription that was requested by the SubscribePacket.
 type SubAckPacket struct {
+	basePacket
 	PacketID uint16
 	Codes    []byte
 	Props    *SubAckProps
@@ -106,6 +112,10 @@ type SubAckPacket struct {
 // Type of SubAckPacket is CtrlSubAck
 func (s *SubAckPacket) Type() CtrlType {
 	return CtrlSubAck
+}
+
+func (s *SubAckPacket) Bytes() []byte {
+	return s.bytes(s)
 }
 
 func (s *SubAckPacket) payload() []byte {
@@ -155,6 +165,7 @@ func (p *SubAckProps) setProps(props map[byte][]byte) {
 // UnSubPacket is sent by the Client to the Server,
 // to unsubscribe from topics.
 type UnSubPacket struct {
+	basePacket
 	PacketID   uint16
 	TopicNames []string
 	Props      *UnSubProps
@@ -163,6 +174,9 @@ type UnSubPacket struct {
 // Type of UnSubPacket is CtrlUnSub
 func (s *UnSubPacket) Type() CtrlType {
 	return CtrlUnSub
+}
+func (s *UnSubPacket) Bytes() []byte {
+	return s.bytes(s)
 }
 
 func (s *UnSubPacket) payload() []byte {
@@ -205,6 +219,7 @@ func (p *UnSubProps) setProps(props map[byte][]byte) {
 // UnSubAckPacket is sent by the Server to the Client to confirm
 // receipt of an UnSubPacket
 type UnSubAckPacket struct {
+	basePacket
 	PacketID uint16
 	Props    *UnSubAckProps
 }
@@ -212,6 +227,10 @@ type UnSubAckPacket struct {
 // Type of UnSubAckPacket is CtrlUnSubAck
 func (s *UnSubAckPacket) Type() CtrlType {
 	return CtrlUnSubAck
+}
+
+func (s *UnSubAckPacket) Bytes() []byte {
+	return s.bytes(s)
 }
 
 // UnSubAckProps properties for UnSubAckPacket

@@ -21,17 +21,17 @@ import (
 )
 
 var (
-	// ErrUnsupportedVersion unsupported mqtt version
-	ErrUnsupportedVersion = errors.New("trying encode unsupported mqtt version ")
+	// ErrUnsupportedVersion unsupported mqtt ProtoVersion
+	ErrUnsupportedVersion = errors.New("trying encode unsupported mqtt ProtoVersion ")
 	// ErrEncodeBadPacket happens when trying to encode none MQTT packet
 	ErrEncodeBadPacket = errors.New("trying encode none MQTT packet ")
 	// ErrEncodeLargePacket happens when mqtt packet is too large according to mqtt spec
 	ErrEncodeLargePacket = errors.New("mqtt packet too large")
 )
 
-// Encode MQTT packet to bytes according to protocol version
-func Encode(version ProtoVersion, packet Packet, w BufferWriter) error {
-	switch version {
+// Encode MQTT packet to bytes according to protocol ProtoVersion
+func Encode(packet Packet, w BufferWriter) error {
+	switch packet.Version() {
 	case V311:
 		return encodeV311Packet(packet, w)
 	case V5:
@@ -54,7 +54,7 @@ func encodeV311Packet(pkt Packet, w BufferWriter) error {
 		payload := c.payload()
 		writeVarInt(10+len(payload), w)
 		w.Write(mqtt)
-		w.WriteByte(V311)
+		w.WriteByte(byte(V311))
 		w.WriteByte(c.flags())
 		w.WriteByte(byte(c.Keepalive >> 8))
 		w.WriteByte(byte(c.Keepalive))
@@ -161,7 +161,7 @@ func encodeV5Packet(pkt Packet, w BufferWriter) error {
 
 		writeVarInt(10+len(payload)+propLen, w)
 		w.Write(mqtt)
-		w.WriteByte(V5)
+		w.WriteByte(byte(V5))
 		w.WriteByte(c.flags())
 		w.WriteByte(byte(c.Keepalive >> 8))
 		w.WriteByte(byte(c.Keepalive))

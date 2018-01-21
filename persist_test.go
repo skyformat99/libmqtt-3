@@ -63,8 +63,8 @@ func testPersist(p PersistMethod, t *testing.T) {
 }
 
 func TestMemPersist(t *testing.T) {
-	p := NewMemPersist(testPersistStrategy)
-
+	tmp := NewMemPersist(testPersistStrategy)
+	p := tmp.(*memPersist)
 	for i, k := range testPersistKeys {
 		if err := p.Store(k, testPersistPackets[i]); err != nil {
 			if err != ErrPacketDroppedByStrategy {
@@ -87,7 +87,8 @@ func TestFilePersist(t *testing.T) {
 		t.Error(err)
 	}
 
-	p := NewFilePersist(dirPath, testPersistStrategy)
+	tmp := NewFilePersist(dirPath, testPersistStrategy)
+	p := tmp.(*filePersist)
 
 	for i, k := range testPersistKeys {
 		if err := p.Store(k, testPersistPackets[i]); err != nil {

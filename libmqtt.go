@@ -16,6 +16,10 @@
 
 package libmqtt
 
+import (
+	"bytes"
+)
+
 // UserProperties contains user defined properties
 type UserProperties map[string][]string
 
@@ -33,6 +37,35 @@ func (u UserProperties) encodeTo(result []byte) {
 type Packet interface {
 	// Type return the packet type
 	Type() CtrlType
+
+	Bytes() []byte
+
+	Version() ProtoVersion
+}
+
+type basePacket struct {
+	ProtoVersion ProtoVersion
+}
+
+func (basePacket) bytes(p Packet) []byte {
+	if p == nil {
+		return nil
+	}
+
+	buf := &bytes.Buffer{}
+	if Encode(p, buf) != nil {
+		return nil
+	}
+
+	return buf.Bytes()
+}
+
+func (b basePacket) Version() ProtoVersion {
+	if b.ProtoVersion != 0 {
+		return b.ProtoVersion
+	}
+
+	return V311
 }
 
 // Topic for both topic name and topic qos
@@ -70,8 +103,8 @@ const (
 	CtrlAuth      CtrlType = 15 // CtrlAuth Authentication (since MQTT 5.0)
 )
 
-// ProtoVersion MQTT Protocol version
-type ProtoVersion = byte
+// ProtoVersion MQTT Protocol ProtoVersion
+type ProtoVersion byte
 
 const (
 	V311 ProtoVersion = 4 // V311 means MQTT 3.1.1

@@ -21,6 +21,7 @@ import "bytes"
 // PublishPacket is sent from a Client to a Server or from Server to a Client
 // to transport an Application Message.
 type PublishPacket struct {
+	basePacket
 	IsDup     bool
 	Qos       QosLevel
 	IsRetain  bool
@@ -33,6 +34,10 @@ type PublishPacket struct {
 // Type of PublishPacket is CtrlPublish
 func (p *PublishPacket) Type() CtrlType {
 	return CtrlPublish
+}
+
+func (p *PublishPacket) Bytes() []byte {
+	return p.bytes(p)
 }
 
 func (p *PublishPacket) payload() []byte {
@@ -182,6 +187,7 @@ func (p *PublishProps) setProps(props map[byte][]byte) {
 
 // PubAckPacket is the response to a PublishPacket with QoS level 1.
 type PubAckPacket struct {
+	basePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubAckProps
@@ -190,6 +196,10 @@ type PubAckPacket struct {
 // Type of PubAckPacket is CtrlPubAck
 func (p *PubAckPacket) Type() CtrlType {
 	return CtrlPubAck
+}
+
+func (p *PubAckPacket) Bytes() []byte {
+	return p.bytes(p)
 }
 
 // PubAckProps properties for PubAckPacket
@@ -234,6 +244,7 @@ func (p *PubAckProps) setProps(props map[byte][]byte) {
 // PubRecvPacket is the response to a PublishPacket with QoS 2.
 // It is the second packet of the QoS 2 protocol exchange.
 type PubRecvPacket struct {
+	basePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubRecvProps
@@ -242,6 +253,10 @@ type PubRecvPacket struct {
 // Type of PubRecvPacket is CtrlPubRecv
 func (p *PubRecvPacket) Type() CtrlType {
 	return CtrlPubRecv
+}
+
+func (p *PubRecvPacket) Bytes() []byte {
+	return p.bytes(p)
 }
 
 // PubRecvProps properties for PubRecvPacket
@@ -286,6 +301,7 @@ func (p *PubRecvProps) setProps(props map[byte][]byte) {
 // PubRelPacket is the response to a PubRecvPacket.
 // It is the third packet of the QoS 2 protocol exchange.
 type PubRelPacket struct {
+	basePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubRelProps
@@ -294,6 +310,10 @@ type PubRelPacket struct {
 // Type of PubRelPacket is CtrlPubRel
 func (p *PubRelPacket) Type() CtrlType {
 	return CtrlPubRel
+}
+
+func (p *PubRelPacket) Bytes() []byte {
+	return p.bytes(p)
 }
 
 // PubRelProps properties for PubRelPacket
@@ -339,6 +359,7 @@ func (p *PubRelProps) setProps(props map[byte][]byte) {
 // PubCompPacket is the response to a PubRelPacket.
 // It is the fourth and final packet of the QoS 892 2 protocol exchange. 893
 type PubCompPacket struct {
+	basePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubCompProps
@@ -347,6 +368,10 @@ type PubCompPacket struct {
 // Type of PubCompPacket is CtrlPubComp
 func (p *PubCompPacket) Type() CtrlType {
 	return CtrlPubComp
+}
+
+func (p *PubCompPacket) Bytes() []byte {
+	return p.bytes(p)
 }
 
 // PubCompProps properties for PubCompPacket

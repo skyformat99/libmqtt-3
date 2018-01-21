@@ -79,9 +79,9 @@ var (
 
 func initConn() {
 	testConnWillMsg = &ConnPacket{
+		basePacket:   basePacket{ProtoVersion: testProtoVersion},
 		Username:     testUsername,
 		Password:     testPassword,
-		Version:      testProtoVersion,
 		ClientID:     testClientID,
 		CleanSession: testCleanSession,
 		IsWill:       testWill,
@@ -97,7 +97,7 @@ func initConn() {
 	connWillPkt.Password = []byte(testPassword)
 	connWillPkt.PasswordFlag = true
 	connWillPkt.ProtocolName = "MQTT"
-	connWillPkt.ProtocolVersion = testProtoVersion
+	connWillPkt.ProtocolVersion = byte(testProtoVersion)
 	connWillPkt.ClientIdentifier = testClientID
 	connWillPkt.CleanSession = testCleanSession
 	connWillPkt.WillFlag = testWill
@@ -111,9 +111,9 @@ func initConn() {
 	testConnWillMsgBytes = connWillBuf.Bytes()
 
 	testConnMsg = &ConnPacket{
+		basePacket:   basePacket{ProtoVersion: testProtoVersion},
 		Username:     testUsername,
 		Password:     testPassword,
-		Version:      testProtoVersion,
 		ClientID:     testClientID,
 		CleanSession: testCleanSession,
 		Keepalive:    testKeepalive,
@@ -124,7 +124,7 @@ func initConn() {
 	connPkt.Password = []byte(testPassword)
 	connPkt.PasswordFlag = true
 	connPkt.ProtocolName = "MQTT"
-	connPkt.ProtocolVersion = testProtoVersion
+	connPkt.ProtocolVersion = byte(testProtoVersion)
 	connPkt.ClientIdentifier = testClientID
 	connPkt.CleanSession = testCleanSession
 	connPkt.Keepalive = testKeepalive
@@ -322,7 +322,7 @@ func initPing() {
 
 func testV311Bytes(pkt Packet, target []byte, t *testing.T) {
 	buf := &bytes.Buffer{}
-	if err := Encode(V311, pkt, buf); err != nil {
+	if err := Encode(pkt, buf); err != nil {
 		t.Error(err)
 	}
 
