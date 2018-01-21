@@ -57,9 +57,9 @@ var (
 	testPacketID uint16 = math.MaxUint16 / 2
 
 	testConnackPresent = true
-	testConnackCode    = ConnSuccess
+	testConnackCode    = byte(CodeSuccess)
 
-	testSubAckCodes = []SubAckCode{SubOkMaxQos0, SubOkMaxQos1, SubFail}
+	testSubAckCodes = []byte{SubOkMaxQos0, SubOkMaxQos1, SubFail}
 )
 
 // conn test data

@@ -16,20 +16,6 @@
 
 package libmqtt
 
-// AuthCode authentication result code
-type AuthCode = byte
-
-const (
-	// AuthSuccess Success, sent by server
-	AuthSuccess AuthCode = 0
-
-	// AuthContinue Continue authentication, sent by client or server
-	AuthContinue AuthCode = 24
-
-	// ReAuth Re-authentication
-	ReAuth AuthCode = 25
-)
-
 // AuthPacket Client <-> Server
 // as part of an extended authentication exchange,
 // such as challenge / response authentication.
@@ -38,10 +24,8 @@ const (
 // an AUTH packet if the ConnPacket did not contain the
 // same Authentication Method
 type AuthPacket struct {
-	// Code the authentication result code
-	Code AuthCode
-	// Props authentication properties
-	Props *AuthProps
+	Code  byte       // the authentication result code
+	Props *AuthProps // authentication properties
 }
 
 // Type of AuthPacket is CtrlAuth

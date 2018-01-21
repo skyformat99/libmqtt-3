@@ -54,11 +54,11 @@ typedef int bool;
 static int client;
 
 // conn_handler for connect packet response
-void conn_handler(int client, char *server, libmqtt_connack_t code, char *err) {
+void conn_handler(int client, char *server, int code, char *err) {
   if (err != NULL) {
     printf("client: %d connect to server: %s failed, error = %s\n", client, server,
            err);
-  } else if (code != libmqtt_connack_accepted) {
+  } else if (code != 0) {
     printf("client: %d connect to server rejected, code: %d\n", client, code);
   } else {
     // connected to the server, subscribe some topic

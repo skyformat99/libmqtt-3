@@ -244,33 +244,14 @@ func (c *ConnProps) setProps(props map[byte][]byte) {
 	}
 }
 
-// ConnAckCode is connection response code from server
-type ConnAckCode = byte
-
-const (
-	// ConnSuccess client accepted by server (3.1.1 or 5)
-	ConnSuccess ConnAckCode = 0
-	// ConnBadProtocol Protocol not supported (3.1.1)
-	ConnBadProtocol ConnAckCode = 1
-	// ConnIDRejected Connection Id not valid (3.1.1)
-	ConnIDRejected ConnAckCode = 2
-	// ConnServerUnavailable Server error (3.1.1)
-	ConnServerUnavailable ConnAckCode = 3
-	// ConnBadIdentity Identity failed (3.1.1)
-	ConnBadIdentity ConnAckCode = 4
-	// ConnAuthFail Auth failed (3.1.1)
-	ConnAuthFail ConnAckCode = 5
-)
-
 // ConnAckPacket is the packet sent by the Server in response to a ConnPacket
 // received from a Client.
 //
 // The first packet sent from the Server to the Client MUST be a ConnAckPacket
 type ConnAckPacket struct {
 	Present bool
-	Code    ConnAckCode
-
-	Props *ConnAckProps
+	Code    byte
+	Props   *ConnAckProps
 }
 
 // Type ConnAckPacket's type is CtrlConnAck
@@ -514,14 +495,10 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 	}
 }
 
-// DisConnCode defines disconnect reason code
-type DisConnCode = byte
-
 // DisConnPacket is the final Control Packet sent from the Client to the Server.
 // It indicates that the Client is disconnecting cleanly.
 type DisConnPacket struct {
-	Code DisConnCode
-
+	Code  byte
 	Props *DisConnProps
 }
 

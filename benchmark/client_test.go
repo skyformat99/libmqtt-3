@@ -29,7 +29,7 @@ const (
 	testServer    = "localhost:1883" // emqttd broker address
 	testTopic     = "/foo"
 	testBufSize   = 100
-	testPubCount  = 100000
+	testPubCount  = 1000000
 )
 
 var (
@@ -42,10 +42,9 @@ func BenchmarkLibmqttClient(b *testing.B) {
 	b.ReportAllocs()
 
 	client, err := lib.NewClient(
-		//lib.WithLog(lib.Verbose),
 		lib.WithServer(testServer),
 		lib.WithKeepalive(testKeepalive, 1.2),
-		lib.WithBuf(1, 1),
+		lib.WithBuf(testBufSize, testBufSize),
 		lib.WithCleanSession(true))
 
 	if err != nil {
@@ -60,10 +59,10 @@ func BenchmarkLibmqttClient(b *testing.B) {
 	})
 
 	b.ResetTimer()
-	client.Connect(func(server string, code lib.ConnAckCode, err error) {
+	client.Connect(func(server string, code byte, err error) {
 		if err != nil {
 			b.Error(err)
-		} else if code != lib.ConnSuccess {
+		} else if code != lib.CodeSuccess {
 			b.Error(code)
 		}
 		for i := 0; i < b.N; i++ {

@@ -53,10 +53,11 @@ func decodeV311Packet(r io.Reader) (Packet, error) {
 	if _, err = io.ReadFull(r, headerBytes[:]); err != nil {
 		return nil, err
 	}
+	header := headerBytes[0]
 
 	bytesToRead, _ := getRemainLength(r)
 	if bytesToRead == 0 {
-		switch headerBytes[0] >> 4 {
+		switch CtrlType(header >> 4) {
 		case CtrlPingReq:
 			return PingReqPacket, nil
 		case CtrlPingResp:
@@ -75,7 +76,7 @@ func decodeV311Packet(r io.Reader) (Packet, error) {
 		return nil, err
 	}
 
-	switch headerBytes[0] >> 4 {
+	switch CtrlType(header >> 4) {
 	case CtrlConn:
 		protocol, body, err := getString(body)
 		if err != nil {
@@ -135,9 +136,9 @@ func decodeV311Packet(r io.Reader) (Packet, error) {
 		}
 
 		pub := &PublishPacket{
-			IsDup:     headerBytes[0]&0x08 == 0x08,
-			Qos:       headerBytes[0] & 0x06 >> 1,
-			IsRetain:  headerBytes[0]&0x01 == 1,
+			IsDup:     header&0x08 == 0x08,
+			Qos:       header & 0x06 >> 1,
+			IsRetain:  header&0x01 == 1,
 			TopicName: topicName,
 		}
 
@@ -180,7 +181,7 @@ func decodeV311Packet(r io.Reader) (Packet, error) {
 	case CtrlSubAck:
 		pkt := &SubAckPacket{
 			PacketID: getUint16(body),
-			Codes:    make([]SubAckCode, 0),
+			Codes:    make([]byte, 0),
 		}
 
 		body = body[2:]
@@ -218,10 +219,11 @@ func decodeV5Packet(r io.Reader) (Packet, error) {
 	if _, err = io.ReadFull(r, headerBytes[:]); err != nil {
 		return nil, err
 	}
+	header := headerBytes[0]
 
 	bytesToRead, _ := getRemainLength(r)
 	if bytesToRead == 0 {
-		switch headerBytes[0] >> 4 {
+		switch CtrlType(header >> 4) {
 		case CtrlPingReq:
 			return PingReqPacket, nil
 		case CtrlPingResp:
@@ -238,7 +240,7 @@ func decodeV5Packet(r io.Reader) (Packet, error) {
 		return nil, err
 	}
 
-	switch headerBytes[0] >> 4 {
+	switch CtrlType(header >> 4) {
 	case CtrlConn:
 		protocol, next, err := getString(body)
 		if err != nil {
@@ -315,9 +317,9 @@ func decodeV5Packet(r io.Reader) (Packet, error) {
 		}
 
 		pub := &PublishPacket{
-			IsDup:     headerBytes[0]&0x08 == 0x08,
-			Qos:       headerBytes[0] & 0x06 >> 1,
-			IsRetain:  headerBytes[0]&0x01 == 1,
+			IsDup:     header&0x08 == 0x08,
+			Qos:       header & 0x06 >> 1,
+			IsRetain:  header&0x01 == 1,
 			TopicName: topicName,
 			Props:     &PublishProps{},
 		}
@@ -409,7 +411,7 @@ func decodeV5Packet(r io.Reader) (Packet, error) {
 		props, next := getRawProps(body[2:])
 		pkt.Props.setProps(props)
 
-		pkt.Codes = make([]SubAckCode, 0)
+		pkt.Codes = make([]byte, 0)
 		for i := 0; i < len(next); i++ {
 			pkt.Codes = append(pkt.Codes, next[i])
 		}

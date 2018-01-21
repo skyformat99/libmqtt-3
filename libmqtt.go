@@ -50,79 +50,102 @@ const (
 )
 
 // CtrlType is MQTT Control packet type
-type CtrlType = byte
+type CtrlType byte
 
 const (
-	// CtrlConn Connect
-	CtrlConn CtrlType = 1
-	// CtrlConnAck Connect Ack
-	CtrlConnAck CtrlType = 2
-	// CtrlPublish Publish
-	CtrlPublish CtrlType = 3
-	// CtrlPubAck Publish Ack
-	CtrlPubAck CtrlType = 4
-	// CtrlPubRecv Publish Received
-	CtrlPubRecv CtrlType = 5
-	// CtrlPubRel Publish Release
-	CtrlPubRel CtrlType = 6
-	// CtrlPubComp Publish Complete
-	CtrlPubComp CtrlType = 7
-	// CtrlSubscribe Subscribe
-	CtrlSubscribe CtrlType = 8
-	// CtrlSubAck Subscribe Ack
-	CtrlSubAck CtrlType = 9
-	// CtrlUnSub UnSubscribe
-	CtrlUnSub CtrlType = 10
-	// CtrlUnSubAck UnSubscribe Ack
-	CtrlUnSubAck CtrlType = 11
-	// CtrlPingReq Ping Request
-	CtrlPingReq CtrlType = 12
-	// CtrlPingResp Ping Response
-	CtrlPingResp CtrlType = 13
-	// CtrlDisConn Disconnect
-	CtrlDisConn CtrlType = 14
-	// CtrlAuth Authentication (since MQTT 5.0)
-	CtrlAuth CtrlType = 15
+	CtrlConn      CtrlType = 1  // CtrlConn Connect
+	CtrlConnAck   CtrlType = 2  // CtrlConnAck Connect Ack
+	CtrlPublish   CtrlType = 3  // CtrlPublish Publish
+	CtrlPubAck    CtrlType = 4  // CtrlPubAck Publish Ack
+	CtrlPubRecv   CtrlType = 5  // CtrlPubRecv Publish Received
+	CtrlPubRel    CtrlType = 6  // CtrlPubRel Publish Release
+	CtrlPubComp   CtrlType = 7  // CtrlPubComp Publish Complete
+	CtrlSubscribe CtrlType = 8  // CtrlSubscribe Subscribe
+	CtrlSubAck    CtrlType = 9  // CtrlSubAck Subscribe Ack
+	CtrlUnSub     CtrlType = 10 // CtrlUnSub UnSubscribe
+	CtrlUnSubAck  CtrlType = 11 // CtrlUnSubAck UnSubscribe Ack
+	CtrlPingReq   CtrlType = 12 // CtrlPingReq Ping Request
+	CtrlPingResp  CtrlType = 13 // CtrlPingResp Ping Response
+	CtrlDisConn   CtrlType = 14 // CtrlDisConn Disconnect
+	CtrlAuth      CtrlType = 15 // CtrlAuth Authentication (since MQTT 5.0)
 )
 
 // ProtoVersion MQTT Protocol version
 type ProtoVersion = byte
 
 const (
-	// V311 means MQTT 3.1.1
-	V311 ProtoVersion = 4
-	// V5 means MQTT 5
-	V5 ProtoVersion = 5
+	V311 ProtoVersion = 4 // V311 means MQTT 3.1.1
+	V5   ProtoVersion = 5 // V5 means MQTT 5
 )
 
 // QosLevel is either 0, 1, 2
 type QosLevel = byte
 
 const (
-	// Qos0 = 0
-	Qos0 QosLevel = 0x00
-	// Qos1 = 1
-	Qos1 QosLevel = 0x01
-	// Qos2 = 2
-	Qos2 QosLevel = 0x02
+	Qos0 QosLevel = 0x00 // Qos0 = 0
+	Qos1 QosLevel = 0x01 // Qos1 = 1
+	Qos2 QosLevel = 0x02 // Qos2 = 2
 )
 
 var (
-	mqtt = []byte("MQTT")
+	mqtt = []byte{0x00, 0x04, 'M', 'Q', 'T', 'T'}
 )
 
-// SubAckCode is returned by server in SubAckPacket
-type SubAckCode = byte
+const (
+	SubOkMaxQos0 = 0    // SubOkMaxQos0 QoS 0 is used by server
+	SubOkMaxQos1 = 1    // SubOkMaxQos1 QoS 1 is used by server
+	SubOkMaxQos2 = 2    // SubOkMaxQos2 QoS 2 is used by server
+	SubFail      = 0x80 // SubFail means that subscription is not successful
+)
+
+// reason code
 
 const (
-	// SubOkMaxQos0 QoS 0 is used by server
-	SubOkMaxQos0 SubAckCode = 0
-	// SubOkMaxQos1 QoS 1 is used by server
-	SubOkMaxQos1 SubAckCode = 1
-	// SubOkMaxQos2 QoS 2 is used by server
-	SubOkMaxQos2 SubAckCode = 2
-	// SubFail means that subscription is not successful
-	SubFail SubAckCode = 0x80
+	CodeSuccess                             = 0   // Packet: ConnAck, PubAck, PubRecv, PubRel, PubComp, UnSubAck, Auth
+	CodeNormalDisconn                       = 0   // Packet: DisConn
+	CodeGrantedQos0                         = 0   // Packet: SubAck
+	CodeGrantedQos1                         = 1   // Packet: SubAck
+	CodeGrantedQos2                         = 2   // Packet: SubAck
+	CodeDisconnWithWill                     = 4   // Packet: DisConn
+	CodeNoMatchingSubscribers               = 16  // Packet: PubAck, PubRecv
+	CodeNoSubscriptionExisted               = 17  // Packet: UnSubAck
+	CodeContinueAuth                        = 24  // Packet: Auth
+	CodeReAuth                              = 25  // Packet: Auth
+	CodeUnspecifiedError                    = 128 // Packet: ConnAck, PubAck, PubRecv, SubAck, UnSubAck, DisConn
+	CodeMalformedPacket                     = 129 // Packet: ConnAck, DisConn
+	CodeProtoError                          = 130 // Packet: ConnAck, DisConn
+	CodeImplementationSpecificError         = 131 // Packet: ConnAck, PubAck, PubRecv, SubAck, UnSubAck, DisConn
+	CodeUnsupportedProtoVersion             = 132 // Packet: ConnAck
+	CodeClientIdNotValid                    = 133 // Packet: ConnAck
+	CodeBadUserPass                         = 134 // Packet: ConnAck
+	CodeNotAuthorized                       = 135 // Packet: ConnAck, PubAck, PubRecv, SubAck, UnSubAck, DisConn
+	CodeServerUnavail                       = 136 // Packet: ConnAck
+	CodeServerBusy                          = 137 // Packet: ConnAck, DisConn
+	CodeBanned                              = 138 // Packet: ConnAck
+	CodeServerShuttingDown                  = 139 // Packet: DisConn
+	CodeBadAuthenticationMethod             = 140 // Packet: ConnAck, DisConn
+	CodeKeepaliveTimeout                    = 141 // Packet: DisConn
+	CodeSessionTakenOver                    = 142 // Packet: DisConn
+	CodeTopicFilterInvalid                  = 143 // Packet: SubAck, UnSubAck, DisConn
+	CodeTopicNameInvalid                    = 144 // Packet: ConnAck, PubAck, PubRecv, DisConn
+	CodePacketIdentifierInUse               = 145 // Packet: PubAck, PubRecv, PubAck, UnSubAck
+	CodePacketIdentifierNotFound            = 146 // Packet: PubRel, PubComp
+	CodeReceiveMaxExceeded                  = 147 // Packet: DisConn
+	CodeTopicAliasInvalid                   = 148 // Packet: DisConn
+	CodePacketTooLarge                      = 149 // Packet: ConnAck, DisConn
+	CodeMessageRateTooHigh                  = 150 // Packet: DisConn
+	CodeQuotaExceeded                       = 151 // Packet: ConnAck, PubAck, PubRec, SubAck, DisConn
+	CodeAdministrativeAction                = 152 // Packet: DisConn
+	CodePayloadFormatInvalid                = 153 // Packet: ConnAck, PubAck, PubRecv, DisConn
+	CodeRetainNotSupported                  = 154 // Packet: ConnAck, DisConn
+	CodeQosNoSupported                      = 155 // Packet: ConnAck, DisConn
+	CodeUseAnotherServer                    = 156 // Packet: ConnAck, DisConn
+	CodeServerMoved                         = 157 // Packet: ConnAck, DisConn
+	CodeSharedSubscriptionNotSupported      = 158 // Packet: SubAck, DisConn
+	CodeConnectionRateExceeded              = 159 // Packet: ConnAck, DisConn
+	CodeMaxConnectTime                      = 160 // Packet: DisConn
+	CodeSubscriptionIdentifiersNotSupported = 161 // Packet: SubAck, DisConn
+	CodeWildcardSubscriptionNotSupported    = 162 // Packet: SubAck, DisConn
 )
 
 // property identifiers
@@ -294,150 +317,4 @@ const (
 	// Property type: byte
 	// Packet: ConnAck
 	propKeySharedSubAvail = 42
-)
-
-// reason code
-
-const (
-	// Packet: ConnAck, PubAck, PubRecv, PubRel,
-	// 		   PubComp, UnSubAck, Auth
-	success = 0
-
-	// Packet: DisConn
-	normalDisconnection = 0
-
-	// Packet: SubAck
-	grantedQos0 = 0
-
-	// Packet: SubAck
-	grantedQos1 = 1
-
-	// Packet: SubAck
-	grantedQos2 = 2
-
-	// Packet: DisConn
-	disconnectWithWillMessage = 4
-
-	// Packet: PubAck, PubRecv
-	noMatchingSubscribers = 16
-
-	// Packet: UnSubAck
-	noSubscriptionExisted = 17
-
-	// Packet: Auth
-	continueAuthentication = 24
-
-	// Packet: Auth
-	reAuthenticatie = 25
-
-	// Packet: ConnAck, PubAck, PubRecv, SubAck,
-	// 		   UnSubAck, DisConn
-	unspecifiedError = 128
-
-	// Packet: ConnAck, DisConn
-	malformedPacket = 129
-
-	// Packet: ConnAck, DisConn
-	protocolError = 130
-
-	// Packet: ConnAck, PubAck, PubRecv, SubAck, UnSubAck, DisConn
-	implementationSpecificError = 131
-
-	// Packet: ConnAck
-	unsupportedProtocolVersion = 132
-
-	// Packet: ConnAck
-	clientIdentifierNotValid = 133
-
-	// Packet: ConnAck
-	badUserNameOrPassword = 134
-
-	// Packet: ConnAck, PubAck, PubRecv, SubAck, UnSubAck, DisConn
-	notAuthorized = 135
-
-	// Packet: ConnAck
-	serverUnavailable = 136
-
-	// Packet: ConnAck, DisConn
-	serverBusy = 137
-
-	// Packet: ConnAck
-	banned = 138
-
-	// Packet: DisConn
-	serverShuttingDown = 139
-
-	// Packet: ConnAck, DisConn
-	badAuthenticationMethod = 140
-
-	// Packet: DisConn
-	keepaliveTimeout = 141
-
-	// Packet: DisConn
-	sessionTakenOver = 142
-
-	// Packet: SubAck, UnSubAck, DisConn
-	topicFilterInvalid = 143
-
-	// Packet: ConnAck, PubAck, PubRecv, DisConn
-	topicNameInvalid = 144
-
-	// Packet: PubAck, PubRecv, PubAck, UnSubAck
-	//
-	// For Packet identifier in use code, the response to this is
-	// either to try to fix the state, or to reset the Session
-	// state by connecting using Clean Start set to 1, or to
-	// decide if the Client or Server implementations are defective.
-	packetIdentifierInUse = 145
-
-	// Packet: PubRel, PubComp
-	packetIdentifierNotFound = 146
-
-	// Packet: DisConn
-	receiveMaxExceeded = 147
-
-	// Packet: DisConn
-	topicAliasInvalid = 148
-
-	// Packet: ConnAck, DisConn
-	packetTooLarge = 149
-
-	// Packet: DisConn
-	messageRateTooHigh = 150
-
-	// Packet: ConnAck, PubAck, PubRec, SubAck, DisConn
-	quotaExceeded = 151
-
-	// Packet: DisConn
-	administrativeAction = 152
-
-	// Packet: ConnAck, PubAck, PubRecv, DisConn
-	payloadFormatInvalid = 153
-
-	// Packet: ConnAck, DisConn
-	retainNotSupported = 154
-
-	// Packet: ConnAck, DisConn
-	qosNoSupported = 155
-
-	// Packet: ConnAck, DisConn
-	useAnotherServer = 156
-
-	// Packet: ConnAck, DisConn
-	serverMoved = 157
-
-	// Packet: SubAck, DisConn
-	sharedSubscriptionNotSupported = 158
-
-	// Packet: ConnAck, DisConn
-	connectionRateExceeded = 159
-
-	// Packet: DisConn
-	maxConnectTime = 160
-
-	// Packet: SubAck, DisConn
-	subscriptionIdentifiersNotSupported = 161
-
-	// Packet: SubAck, DisConn
-	wildcardSubscriptionNotSupported = 162
 )

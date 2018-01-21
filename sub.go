@@ -99,7 +99,7 @@ func (s *SubscribeProps) setProps(props map[byte][]byte) {
 // each Subscription that was requested by the SubscribePacket.
 type SubAckPacket struct {
 	PacketID uint16
-	Codes    []SubAckCode
+	Codes    []byte
 	Props    *SubAckProps
 }
 
@@ -125,6 +125,7 @@ func (p *SubAckProps) props() []byte {
 	if p == nil {
 		return nil
 	}
+
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
