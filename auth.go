@@ -54,17 +54,17 @@ func (a *AuthProps) props() []byte {
 	result := make([]byte, 0)
 	if a.AuthMethod != "" {
 		result = append(result, propKeyAuthMethod)
-		result = append(result, encodeDataWithLen([]byte(a.AuthMethod))...)
+		result = append(result, encodeStringWithLen(a.AuthMethod)...)
 	}
 
 	if a.AuthData != nil {
 		result = append(result, propKeyAuthData)
-		result = append(result, encodeDataWithLen(a.AuthData)...)
+		result = append(result, encodeBytesWithLen(a.AuthData)...)
 	}
 
 	if a.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(a.Reason))...)
+		result = append(result, encodeStringWithLen(a.Reason)...)
 	}
 
 	if a.UserProps != nil {

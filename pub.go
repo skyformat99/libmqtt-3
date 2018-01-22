@@ -41,7 +41,7 @@ func (p *PublishPacket) Bytes() []byte {
 }
 
 func (p *PublishPacket) payload() []byte {
-	data := encodeDataWithLen([]byte(p.TopicName))
+	data := encodeStringWithLen(p.TopicName)
 	if p.Qos > Qos0 {
 		data = append(data, byte(p.PacketID>>8), byte(p.PacketID))
 	}
@@ -111,12 +111,12 @@ func (p *PublishProps) props() []byte {
 
 	if p.RespTopic != "" {
 		result = append(result, propKeyRespTopic)
-		result = append(result, encodeDataWithLen([]byte(p.RespTopic))...)
+		result = append(result, encodeStringWithLen(p.RespTopic)...)
 	}
 
 	if p.CorrelationData != nil {
 		result = append(result, propKeyCorrelationData)
-		result = append(result, encodeDataWithLen(p.CorrelationData)...)
+		result = append(result, encodeBytesWithLen(p.CorrelationData)...)
 	}
 
 	if p.UserProps != nil {
@@ -135,7 +135,7 @@ func (p *PublishProps) props() []byte {
 
 	if p.ContentType != "" {
 		result = append(result, propKeyContentType)
-		result = append(result, encodeDataWithLen([]byte(p.ContentType))...)
+		result = append(result, encodeStringWithLen(p.ContentType)...)
 	}
 
 	return result
@@ -218,7 +218,7 @@ func (p *PubAckProps) props() []byte {
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+		result = append(result, encodeStringWithLen(p.Reason)...)
 	}
 
 	if p.UserProps != nil {
@@ -275,7 +275,7 @@ func (p *PubRecvProps) props() []byte {
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+		result = append(result, encodeStringWithLen(p.Reason)...)
 	}
 
 	if p.UserProps != nil {
@@ -333,7 +333,7 @@ func (p *PubRelProps) props() []byte {
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+		result = append(result, encodeStringWithLen(p.Reason)...)
 	}
 
 	if p.UserProps != nil {
@@ -390,7 +390,7 @@ func (p *PubCompProps) props() []byte {
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+		result = append(result, encodeStringWithLen(p.Reason)...)
 	}
 
 	if p.UserProps != nil {

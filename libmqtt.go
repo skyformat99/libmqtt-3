@@ -27,8 +27,8 @@ func (u UserProps) encodeTo(result []byte) {
 	for k, v := range u {
 		for _, val := range v {
 			result = append(result, propKeyUserProps)
-			result = append(result, encodeDataWithLen([]byte(k))...)
-			result = append(result, encodeDataWithLen([]byte(val))...)
+			result = append(result, encodeStringWithLen(k)...)
+			result = append(result, encodeStringWithLen(val)...)
 		}
 	}
 }

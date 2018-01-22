@@ -46,7 +46,7 @@ func (s *SubscribePacket) payload() []byte {
 	var result []byte
 	if s.Topics != nil {
 		for _, t := range s.Topics {
-			result = append(result, encodeDataWithLen([]byte(t.Name))...)
+			result = append(result, encodeStringWithLen(t.Name)...)
 			result = append(result, t.Qos)
 		}
 	}
@@ -139,7 +139,7 @@ func (p *SubAckProps) props() []byte {
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+		result = append(result, encodeStringWithLen(p.Reason)...)
 	}
 
 	if p.UserProps != nil {
@@ -183,7 +183,7 @@ func (s *UnSubPacket) payload() []byte {
 	result := make([]byte, 0)
 	if s.TopicNames != nil {
 		for _, t := range s.TopicNames {
-			result = append(result, encodeDataWithLen([]byte(t))...)
+			result = append(result, encodeStringWithLen(t)...)
 		}
 	}
 	return result
@@ -249,7 +249,7 @@ func (p *UnSubAckProps) props() []byte {
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(p.Reason))...)
+		result = append(result, encodeStringWithLen(p.Reason)...)
 	}
 
 	if p.UserProps != nil {

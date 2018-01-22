@@ -267,7 +267,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 		// read properties
 		var props map[byte][]byte
-		props, next = getRawProps(next[4:])
+		props, next, err = getRawProps(next[4:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		if pkt.ClientID, next, err = getStringData(next); err != nil {
@@ -299,7 +302,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props:   &ConnAckProps{},
 		}
 
-		props, _ := getRawProps(body[2:])
+		props, _, err := getRawProps(body[2:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil
@@ -327,7 +333,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		}
 
 		var props map[byte][]byte
-		props, next = getRawProps(body[3:])
+		props, next, err = getRawProps(body[3:])
+		if err != nil {
+			return nil, err
+		}
 		pub.Props.setProps(props)
 
 		pub.Payload = next
@@ -339,7 +348,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props:    &PubAckProps{},
 		}
 
-		props, _ := getRawProps(body[3:])
+		props, _, err := getRawProps(body[3:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil
@@ -349,7 +361,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Code:     body[2],
 			Props:    &PubRecvProps{},
 		}
-		props, _ := getRawProps(body[3:])
+		props, _, err := getRawProps(body[3:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil
@@ -359,7 +374,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Code:     body[2],
 			Props:    &PubRelProps{},
 		}
-		props, _ := getRawProps(body[3:])
+		props, _, err := getRawProps(body[3:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil
@@ -370,7 +388,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props:    &PubCompProps{},
 		}
 
-		props, _ := getRawProps(body[3:])
+		props, _, err := getRawProps(body[3:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil
@@ -380,7 +401,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props:    &SubscribeProps{},
 		}
 
-		props, next := getRawProps(body[2:])
+		props, next, err := getRawProps(body[2:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		topics := make([]*Topic, 0)
@@ -405,7 +429,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props:    &SubAckProps{},
 		}
 
-		props, next := getRawProps(body[2:])
+		props, next, err := getRawProps(body[2:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		pkt.Codes = make([]byte, 0)
@@ -419,7 +446,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props:    &UnSubProps{},
 		}
 
-		props, next := getRawProps(body[2:])
+		props, next, err := getRawProps(body[2:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		pkt.TopicNames = make([]string, 0)
@@ -438,7 +468,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props:    &UnSubAckProps{},
 		}
 
-		props, _ := getRawProps(body[2:])
+		props, _, err := getRawProps(body[2:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil
@@ -448,7 +481,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props: &DisConnProps{},
 		}
 
-		props, _ := getRawProps(body[1:])
+		props, _, err := getRawProps(body[1:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil
@@ -458,7 +494,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			Props: &AuthProps{},
 		}
 
-		props, _ := getRawProps(body[1:])
+		props, _, err := getRawProps(body[1:])
+		if err != nil {
+			return nil, err
+		}
 		pkt.Props.setProps(props)
 
 		return pkt, nil

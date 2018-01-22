@@ -89,7 +89,11 @@ func putUint32(d []byte, v uint32) {
 	binary.BigEndian.PutUint32(d[:], v)
 }
 
-func encodeDataWithLen(data []byte) []byte {
+func encodeStringWithLen(str string) []byte {
+	return encodeBytesWithLen([]byte(str))
+}
+
+func encodeBytesWithLen(data []byte) []byte {
 	l := len(data)
 	result := []byte{byte(l >> 8), byte(l)}
 	return append(result, data...)
@@ -164,12 +168,21 @@ func getUint32(d []byte) uint32 {
 	return binary.BigEndian.Uint32(d)
 }
 
-func getRawProps(data []byte) (props map[byte][]byte, next []byte) {
+// | prop length |
+// | prop body.. |
+// |   payload   |
+func getRawProps(data []byte) (props map[byte][]byte, next []byte, err error) {
 	propsLen, byteLen := getRemainLength(bytes.NewReader(data))
-	propsBytes := data[1 : propsLen+byteLen]
-	next = data[1+propsLen:]
-
+	propsBytes := data[byteLen : propsLen+byteLen]
+	next = data[propsLen+byteLen:]
 	props = make(map[byte][]byte)
+
+	defer func() {
+		e := recover()
+		if e != nil {
+			err = ErrDecodeBadPacket
+		}
+	}()
 	for i := 0; i < propsLen; {
 		var p []byte
 		switch propsBytes[0] {
@@ -219,9 +232,9 @@ func getRawProps(data []byte) (props map[byte][]byte, next []byte) {
 		case propKeyRetainAvail:
 			p = propsBytes[1:2]
 		case propKeyUserProps:
-			keyEnd := 3 + getUint16(propsBytes[2:4])
-			valEnd := keyEnd + getUint16(propsBytes[keyEnd:keyEnd+2])
-			p = append(propsBytes[1:keyEnd], propsBytes[keyEnd:valEnd]...)
+			keyEnd := 2 + getUint16(propsBytes[1:3])
+			valEnd := 2 + keyEnd + getUint16(propsBytes[keyEnd+1:keyEnd+3])
+			p = propsBytes[1 : valEnd+1]
 		case propKeyMaxPacketSize:
 			p = propsBytes[1:5]
 		case propKeyWildcardSubAvail:
@@ -230,25 +243,30 @@ func getRawProps(data []byte) (props map[byte][]byte, next []byte) {
 			p = propsBytes[1:2]
 		case propKeySharedSubAvail:
 			p = propsBytes[1:2]
+		default:
+			err = ErrDecodeBadPacket
+			return
 		}
 		props[propsBytes[0]] = p
 		propsBytes = propsBytes[1+len(p):]
 		i += 1 + len(p)
 	}
 
-	return props, next
+	return
 }
 
 func getUserProps(data []byte) UserProps {
 	props := make(UserProps)
-	for str, next, _ := getStringData(data); next != nil; {
+	strKey, next, _ := getStringData(data)
+	for ; next != nil; strKey, next, _ = getStringData(data) {
 		var val string
 		val, next, _ = getStringData(next)
 
-		if _, ok := props[str]; ok {
-			props[str] = append(props[str], val)
+		if _, ok := props[strKey]; ok {
+			props[strKey] = append(props[strKey], val)
 		} else {
-			props[str] = []string{val}
+			props[strKey] = make([]string, 1)
+			props[strKey][0] = val
 		}
 	}
 	return props

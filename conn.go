@@ -81,20 +81,20 @@ func (c *ConnPacket) flags() byte {
 
 func (c *ConnPacket) payload() []byte {
 	// client id
-	result := encodeDataWithLen([]byte(c.ClientID))
+	result := encodeStringWithLen(c.ClientID)
 
 	// will topic and message
 	if c.IsWill {
-		result = append(result, encodeDataWithLen([]byte(c.WillTopic))...)
-		result = append(result, encodeDataWithLen(c.WillMessage)...)
+		result = append(result, encodeStringWithLen(c.WillTopic)...)
+		result = append(result, encodeBytesWithLen(c.WillMessage)...)
 	}
 
 	if c.Username != "" {
-		result = append(result, encodeDataWithLen([]byte(c.Username))...)
+		result = append(result, encodeStringWithLen(c.Username)...)
 	}
 
 	if c.Password != "" {
-		result = append(result, encodeDataWithLen([]byte(c.Password))...)
+		result = append(result, encodeStringWithLen(c.Password)...)
 	}
 
 	return result
@@ -195,12 +195,12 @@ func (c *ConnProps) props() []byte {
 
 	if c.AuthMethod != "" {
 		result = append(result, propKeyAuthMethod)
-		result = append(result, encodeDataWithLen([]byte(c.AuthMethod))...)
+		result = append(result, encodeStringWithLen(c.AuthMethod)...)
 	}
 
 	if c.AuthData != nil {
 		result = append(result, propKeyAuthData)
-		result = append(result, encodeDataWithLen(c.AuthData)...)
+		result = append(result, encodeBytesWithLen(c.AuthData)...)
 	}
 
 	return result
@@ -383,7 +383,7 @@ func (c *ConnAckProps) props() []byte {
 
 	if c.AssignedClientID != "" {
 		result = append(result, propKeyAssignedClientID)
-		result = append(result, encodeDataWithLen([]byte(c.AssignedClientID))...)
+		result = append(result, encodeStringWithLen(c.AssignedClientID)...)
 	}
 
 	if c.MaxTopicAlias != 0 {
@@ -394,7 +394,7 @@ func (c *ConnAckProps) props() []byte {
 
 	if c.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(c.Reason))...)
+		result = append(result, encodeStringWithLen(c.Reason)...)
 	}
 
 	if c.UserProps != nil {
@@ -421,22 +421,22 @@ func (c *ConnAckProps) props() []byte {
 
 	if c.RespInfo != "" {
 		result = append(result, propKeyRespInfo)
-		result = append(result, encodeDataWithLen([]byte(c.RespInfo))...)
+		result = append(result, encodeStringWithLen(c.RespInfo)...)
 	}
 
 	if c.ServerRef != "" {
 		result = append(result, propKeyServerRef)
-		result = append(result, encodeDataWithLen([]byte(c.ServerRef))...)
+		result = append(result, encodeStringWithLen(c.ServerRef)...)
 	}
 
 	if c.AuthMethod != "" {
 		result = append(result, propKeyAuthMethod)
-		result = append(result, encodeDataWithLen([]byte(c.AuthMethod))...)
+		result = append(result, encodeStringWithLen(c.AuthMethod)...)
 	}
 
 	if c.AuthData != nil {
 		result = append(result, propKeyAuthData)
-		result = append(result, encodeDataWithLen(c.AuthData)...)
+		result = append(result, encodeBytesWithLen(c.AuthData)...)
 	}
 
 	return result
@@ -553,7 +553,7 @@ func (d *DisConnProps) props() []byte {
 
 	if d.Reason != "" {
 		result = append(result, propKeyReasonString)
-		result = append(result, encodeDataWithLen([]byte(d.Reason))...)
+		result = append(result, encodeStringWithLen(d.Reason)...)
 	}
 
 	if d.UserProps != nil {
@@ -562,7 +562,7 @@ func (d *DisConnProps) props() []byte {
 
 	if d.ServerRef != "" {
 		result = append(result, propKeyServerRef)
-		result = append(result, encodeDataWithLen([]byte(d.ServerRef))...)
+		result = append(result, encodeStringWithLen(d.ServerRef)...)
 	}
 
 	return result
