@@ -20,10 +20,10 @@ import (
 	"bytes"
 )
 
-// UserProperties contains user defined properties
-type UserProperties map[string][]string
+// UserProps contains user defined properties
+type UserProps map[string][]string
 
-func (u UserProperties) encodeTo(result []byte) {
+func (u UserProps) encodeTo(result []byte) {
 	for k, v := range u {
 		for _, val := range v {
 			result = append(result, propKeyUserProps)
@@ -38,16 +38,19 @@ type Packet interface {
 	// Type return the packet type
 	Type() CtrlType
 
+	// Bytes encode packet to bytes
 	Bytes() []byte
 
+	// Version MQTT version of the packet
 	Version() ProtoVersion
 }
 
-type basePacket struct {
+// BasePacket for packet encoding and MQTT version note
+type BasePacket struct {
 	ProtoVersion ProtoVersion
 }
 
-func (basePacket) bytes(p Packet) []byte {
+func (BasePacket) bytes(p Packet) []byte {
 	if p == nil {
 		return nil
 	}
@@ -60,7 +63,8 @@ func (basePacket) bytes(p Packet) []byte {
 	return buf.Bytes()
 }
 
-func (b basePacket) Version() ProtoVersion {
+// Version MQTT version of this packet
+func (b BasePacket) Version() ProtoVersion {
 	if b.ProtoVersion != 0 {
 		return b.ProtoVersion
 	}
@@ -318,7 +322,7 @@ const (
 	// Packet: ConnAck
 	propKeyRetainAvail = 37
 
-	// UserProperties is
+	// UserProps is
 	//
 	// Property type: utf-8 string pair
 	// Packet: Connect, ConnAck, Publish, Will,

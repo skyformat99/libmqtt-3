@@ -23,10 +23,12 @@ import (
 var (
 	// ErrUnsupportedVersion unsupported mqtt ProtoVersion
 	ErrUnsupportedVersion = errors.New("trying encode unsupported mqtt ProtoVersion ")
+
 	// ErrEncodeBadPacket happens when trying to encode none MQTT packet
 	ErrEncodeBadPacket = errors.New("trying encode none MQTT packet ")
-	// ErrEncodeLargePacket happens when mqtt packet is too large according to mqtt spec
-	ErrEncodeLargePacket = errors.New("mqtt packet too large")
+
+	// ErrEncodeLargePacket happens when MQTT packet is too large according to MQTT spec
+	ErrEncodeLargePacket = errors.New("MQTT packet too large")
 )
 
 // Encode MQTT packet to bytes according to protocol ProtoVersion
@@ -52,7 +54,9 @@ func encodeV311Packet(pkt Packet, w BufferedWriter) error {
 		c := pkt.(*ConnPacket)
 		w.WriteByte(byte(CtrlConn << 4))
 		payload := c.payload()
-		writeVarInt(10+len(payload), w)
+		if err := writeVarInt(len(payload)+10, w); err != nil {
+			return err
+		}
 		w.Write(mqtt)
 		w.WriteByte(byte(V311))
 		w.WriteByte(c.flags())
@@ -63,7 +67,7 @@ func encodeV311Packet(pkt Packet, w BufferedWriter) error {
 	case *ConnAckPacket:
 		c := pkt.(*ConnAckPacket)
 		w.WriteByte(byte(CtrlConnAck << 4))
-		w.WriteByte(0x02)
+		w.WriteByte(2)
 		w.WriteByte(boolToByte(c.Present))
 		return w.WriteByte(c.Code)
 	case *PublishPacket:
@@ -76,32 +80,34 @@ func encodeV311Packet(pkt Packet, w BufferedWriter) error {
 	case *PubAckPacket:
 		p := pkt.(*PubAckPacket)
 		w.WriteByte(byte(CtrlPubAck << 4))
-		w.WriteByte(0x02)
+		w.WriteByte(2)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
 	case *PubRecvPacket:
 		p := pkt.(*PubRecvPacket)
 		w.WriteByte(byte(CtrlPubRecv << 4))
-		w.WriteByte(0x02)
+		w.WriteByte(2)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
 	case *PubRelPacket:
 		p := pkt.(*PubRelPacket)
 		w.WriteByte(byte(CtrlPubRel<<4 | 0x02))
-		w.WriteByte(0x02)
+		w.WriteByte(2)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
 	case *PubCompPacket:
 		p := pkt.(*PubCompPacket)
 		w.WriteByte(byte(CtrlPubComp << 4))
-		w.WriteByte(0x02)
+		w.WriteByte(2)
 		w.WriteByte(byte(p.PacketID >> 8))
 		return w.WriteByte(byte(p.PacketID))
 	case *SubscribePacket:
 		s := pkt.(*SubscribePacket)
 		w.WriteByte(byte(CtrlSubscribe<<4 | 0x02))
 		payload := s.payload()
-		writeVarInt(2+len(payload), w)
+		if err := writeVarInt(len(payload)+2, w); err != nil {
+			return err
+		}
 		w.WriteByte(byte(s.PacketID >> 8))
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
@@ -110,7 +116,9 @@ func encodeV311Packet(pkt Packet, w BufferedWriter) error {
 		s := pkt.(*SubAckPacket)
 		w.WriteByte(byte(CtrlSubAck << 4))
 		payload := s.payload()
-		writeVarInt(2+len(payload), w)
+		if err := writeVarInt(len(payload)+2, w); err != nil {
+			return err
+		}
 		w.WriteByte(byte(s.PacketID >> 8))
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
@@ -119,7 +127,9 @@ func encodeV311Packet(pkt Packet, w BufferedWriter) error {
 		s := pkt.(*UnSubPacket)
 		w.WriteByte(byte(CtrlUnSub<<4 | 0x02))
 		payload := s.payload()
-		writeVarInt(2+len(payload), w)
+		if err := writeVarInt(len(payload)+2, w); err != nil {
+			return err
+		}
 		w.WriteByte(byte(s.PacketID >> 8))
 		w.WriteByte(byte(s.PacketID))
 		_, err := w.Write(payload)
@@ -159,7 +169,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		propLen := len(props)
 		payload := c.payload()
 
-		writeVarInt(10+len(payload)+propLen, w)
+		if err := writeVarInt(len(payload)+propLen+10, w); err != nil {
+			return err
+		}
 		w.Write(mqtt)
 		w.WriteByte(byte(V5))
 		w.WriteByte(c.flags())
@@ -178,13 +190,15 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		props := c.Props.props()
 		propLen := len(props)
 
-		writeVarInt(2+propLen, w)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
+
 		w.WriteByte(boolToByte(c.Present))
 		w.WriteByte(c.Code)
 
 		writeVarInt(propLen, w)
 		_, err := w.Write(props)
-
 		return err
 	case *PublishPacket:
 		p := pkt.(*PublishPacket)
@@ -194,7 +208,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		propLen := len(props)
 		payload := p.payload()
 
-		writeVarInt(propLen+len(payload), w)
+		if err := writeVarInt(len(payload)+propLen, w); err != nil {
+			return err
+		}
 
 		writeVarInt(propLen, w)
 		w.Write(props)
@@ -207,7 +223,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 
 		props := p.Props.props()
 		propLen := len(props)
-		writeVarInt(propLen+2, w)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
 
 		w.WriteByte(byte(p.PacketID >> 8))
 		w.WriteByte(byte(p.PacketID))
@@ -222,7 +240,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 
 		props := p.Props.props()
 		propLen := len(props)
-		writeVarInt(propLen+2, w)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
 
 		w.WriteByte(byte(p.PacketID >> 8))
 		w.WriteByte(byte(p.PacketID))
@@ -237,7 +257,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 
 		props := p.Props.props()
 		propLen := len(props)
-		writeVarInt(propLen+2, w)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
 
 		w.WriteByte(byte(p.PacketID >> 8))
 		w.WriteByte(byte(p.PacketID))
@@ -252,7 +274,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 
 		props := p.Props.props()
 		propLen := len(props)
-		writeVarInt(propLen+2, w)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
 
 		w.WriteByte(byte(p.PacketID >> 8))
 		w.WriteByte(byte(p.PacketID))
@@ -269,7 +293,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		payload := s.payload()
 		propLen := len(props)
 
-		writeVarInt(2+len(payload)+propLen, w)
+		if err := writeVarInt(len(payload)+propLen+2, w); err != nil {
+			return err
+		}
 
 		w.WriteByte(byte(s.PacketID >> 8))
 		w.WriteByte(byte(s.PacketID))
@@ -287,7 +313,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		payload := s.payload()
 		propLen := len(props)
 
-		writeVarInt(2+len(payload)+propLen, w)
+		if err := writeVarInt(len(payload)+propLen+2, w); err != nil {
+			return err
+		}
 
 		w.WriteByte(byte(s.PacketID >> 8))
 		w.WriteByte(byte(s.PacketID))
@@ -304,7 +332,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		payload := s.payload()
 		propLen := len(props)
 
-		writeVarInt(2+len(payload)+propLen, w)
+		if err := writeVarInt(len(payload)+propLen+2, w); err != nil {
+			return err
+		}
 
 		w.WriteByte(byte(s.PacketID >> 8))
 		w.WriteByte(byte(s.PacketID))
@@ -336,7 +366,9 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		w.WriteByte(byte(CtrlDisConn << 4))
 		props := d.Props.props()
 
-		writeVarInt(len(props)+1, w)
+		if err := writeVarInt(len(props)+1, w); err != nil {
+			return err
+		}
 		w.WriteByte(d.Code)
 		writeVarInt(len(props), w)
 		_, err := w.Write(props)
@@ -345,7 +377,10 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		a := pkt.(*AuthPacket)
 		w.WriteByte(byte(CtrlAuth << 4))
 		props := a.Props.props()
-		writeVarInt(1+len(props), w)
+		if err := writeVarInt(len(props)+1, w); err != nil {
+			return err
+		}
+
 		w.WriteByte(a.Code)
 		writeVarInt(len(props), w)
 		_, err := w.Write(props)

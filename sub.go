@@ -27,7 +27,7 @@ import "bytes"
 // The SubscribePacket also specifies (for each Subscription)
 // the maximum QoS with which the Server can send Application Messages to the Client
 type SubscribePacket struct {
-	basePacket
+	BasePacket
 	PacketID uint16
 	Topics   []*Topic
 	Props    *SubscribeProps
@@ -58,7 +58,7 @@ type SubscribeProps struct {
 	// SubID identifier of the subscription
 	SubID uint32
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (s *SubscribeProps) props() []byte {
@@ -103,7 +103,7 @@ func (s *SubscribeProps) setProps(props map[byte][]byte) {
 // that specify the maximum QoS level that was granted in
 // each Subscription that was requested by the SubscribePacket.
 type SubAckPacket struct {
-	basePacket
+	BasePacket
 	PacketID uint16
 	Codes    []byte
 	Props    *SubAckProps
@@ -128,7 +128,7 @@ type SubAckProps struct {
 	Reason string
 
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (p *SubAckProps) props() []byte {
@@ -154,7 +154,7 @@ func (p *SubAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		p.Reason, _, _ = getString(v)
+		p.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
@@ -165,7 +165,7 @@ func (p *SubAckProps) setProps(props map[byte][]byte) {
 // UnSubPacket is sent by the Client to the Server,
 // to unsubscribe from topics.
 type UnSubPacket struct {
-	basePacket
+	BasePacket
 	PacketID   uint16
 	TopicNames []string
 	Props      *UnSubProps
@@ -192,7 +192,7 @@ func (s *UnSubPacket) payload() []byte {
 // UnSubProps properties for UnSubPacket
 type UnSubProps struct {
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (p *UnSubProps) props() []byte {
@@ -219,7 +219,7 @@ func (p *UnSubProps) setProps(props map[byte][]byte) {
 // UnSubAckPacket is sent by the Server to the Client to confirm
 // receipt of an UnSubPacket
 type UnSubAckPacket struct {
-	basePacket
+	BasePacket
 	PacketID uint16
 	Props    *UnSubAckProps
 }
@@ -239,7 +239,7 @@ type UnSubAckProps struct {
 	Reason string
 
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (p *UnSubAckProps) props() []byte {
@@ -264,7 +264,7 @@ func (p *UnSubAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		p.Reason, _, _ = getString(v)
+		p.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {

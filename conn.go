@@ -18,7 +18,7 @@ package libmqtt
 
 // ConnPacket is the first packet sent by Client to Server
 type ConnPacket struct {
-	basePacket
+	BasePacket
 	ProtoName string
 
 	// Flags
@@ -138,7 +138,7 @@ type ConnProps struct {
 	ReqProblemInfo bool
 
 	// User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 
 	// If Authentication Method is absent, extended authentication is not performed.
 	//
@@ -240,7 +240,7 @@ func (c *ConnProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyAuthMethod]; ok {
-		c.AuthMethod, _, _ = getString(v)
+		c.AuthMethod, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyAuthData]; ok {
@@ -253,7 +253,7 @@ func (c *ConnProps) setProps(props map[byte][]byte) {
 //
 // The first packet sent from the Server to the Client MUST be a ConnAckPacket
 type ConnAckPacket struct {
-	basePacket
+	BasePacket
 	Present bool
 	Code    byte
 	Props   *ConnAckProps
@@ -310,7 +310,7 @@ type ConnAckProps struct {
 	Reason string
 
 	// User defines Properties
-	UserProps UserProperties
+	UserProps UserProps
 
 	// Whether the Server supports Wildcard Subscriptions.
 	// false means that Wildcard Subscriptions are not supported.
@@ -464,7 +464,7 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyAssignedClientID]; ok {
-		c.AssignedClientID, _, _ = getString(v)
+		c.AssignedClientID, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyMaxTopicAlias]; ok {
@@ -472,7 +472,7 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		c.Reason, _, _ = getString(v)
+		c.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
@@ -488,15 +488,15 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyRespInfo]; ok {
-		c.RespInfo, _, _ = getString(v)
+		c.RespInfo, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyServerRef]; ok {
-		c.ServerRef, _, _ = getString(v)
+		c.ServerRef, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyAuthMethod]; ok {
-		c.AuthMethod, _, _ = getString(v)
+		c.AuthMethod, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyAuthData]; ok {
@@ -507,7 +507,7 @@ func (c *ConnAckProps) setProps(props map[byte][]byte) {
 // DisConnPacket is the final Control Packet sent from the Client to the Server.
 // It indicates that the Client is disconnecting cleanly.
 type DisConnPacket struct {
-	basePacket
+	BasePacket
 	Code  byte
 	Props *DisConnProps
 }
@@ -533,7 +533,7 @@ type DisConnProps struct {
 	Reason string
 
 	// User defines Properties
-	UserProps UserProperties
+	UserProps UserProps
 
 	// Used by the Client to identify another Server to use
 	ServerRef string
@@ -578,7 +578,7 @@ func (d *DisConnProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		d.Reason, _, _ = getString(v)
+		d.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
@@ -586,6 +586,6 @@ func (d *DisConnProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyServerRef]; ok {
-		d.ServerRef, _, _ = getString(v)
+		d.ServerRef, _, _ = getStringData(v)
 	}
 }

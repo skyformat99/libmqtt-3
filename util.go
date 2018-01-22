@@ -95,14 +95,14 @@ func encodeDataWithLen(data []byte) []byte {
 	return append(result, data...)
 }
 
-func writeVarInt(n int, w BufferedWriter) {
+func writeVarInt(n int, w BufferedWriter) error {
 	if n < 0 || n > maxMsgSize {
-		return
+		return ErrEncodeLargePacket
 	}
 
 	if n == 0 {
 		w.WriteByte(0)
-		return
+		return nil
 	}
 
 	for n > 0 {
@@ -113,9 +113,11 @@ func writeVarInt(n int, w BufferedWriter) {
 		}
 		w.WriteByte(encodedByte)
 	}
+
+	return nil
 }
 
-func getString(data []byte) (string, []byte, error) {
+func getStringData(data []byte) (string, []byte, error) {
 	b, next, err := getBinaryData(data)
 	if err == nil {
 		return string(b), next, err
@@ -137,14 +139,14 @@ func getBinaryData(data []byte) ([]byte, []byte, error) {
 	return data[2 : length+2], data[length+2:], nil
 }
 
-func getRemainLength(r io.ByteReader) (int, int) {
-	var length, m uint32
+func getRemainLength(r io.ByteReader) (length int, byteCount int) {
+	var m uint32
 	for m < 27 {
 		b, err := r.ReadByte()
 		if err != nil {
 			return 0, 0
 		}
-		length |= uint32(b&127) << m
+		length |= int(b&127) << m
 		if (b & 128) == 0 {
 			break
 		}
@@ -162,12 +164,12 @@ func getUint32(d []byte) uint32 {
 	return binary.BigEndian.Uint32(d)
 }
 
-func getRawProps(data []byte) (map[byte][]byte, []byte) {
+func getRawProps(data []byte) (props map[byte][]byte, next []byte) {
 	propsLen, byteLen := getRemainLength(bytes.NewReader(data))
 	propsBytes := data[1 : propsLen+byteLen]
-	next := data[1+propsLen:]
+	next = data[1+propsLen:]
 
-	props := make(map[byte][]byte)
+	props = make(map[byte][]byte)
 	for i := 0; i < propsLen; {
 		var p []byte
 		switch propsBytes[0] {
@@ -237,11 +239,11 @@ func getRawProps(data []byte) (map[byte][]byte, []byte) {
 	return props, next
 }
 
-func getUserProps(data []byte) UserProperties {
-	props := make(UserProperties)
-	for str, next, _ := getString(data); next != nil; {
+func getUserProps(data []byte) UserProps {
+	props := make(UserProps)
+	for str, next, _ := getStringData(data); next != nil; {
 		var val string
-		val, next, _ = getString(next)
+		val, next, _ = getStringData(next)
 
 		if _, ok := props[str]; ok {
 			props[str] = append(props[str], val)

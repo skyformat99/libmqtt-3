@@ -79,7 +79,7 @@ var (
 
 func initConn() {
 	testConnWillMsg = &ConnPacket{
-		basePacket:   basePacket{ProtoVersion: testProtoVersion},
+		BasePacket:   BasePacket{ProtoVersion: testProtoVersion},
 		Username:     testUsername,
 		Password:     testPassword,
 		ClientID:     testClientID,
@@ -111,7 +111,7 @@ func initConn() {
 	testConnWillMsgBytes = connWillBuf.Bytes()
 
 	testConnMsg = &ConnPacket{
-		basePacket:   basePacket{ProtoVersion: testProtoVersion},
+		BasePacket:   BasePacket{ProtoVersion: testProtoVersion},
 		Username:     testUsername,
 		Password:     testPassword,
 		ClientID:     testClientID,

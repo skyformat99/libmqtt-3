@@ -24,7 +24,7 @@ package libmqtt
 // an AUTH packet if the ConnPacket did not contain the
 // same Authentication Method
 type AuthPacket struct {
-	basePacket
+	BasePacket
 	Code  byte       // the authentication result code
 	Props *AuthProps // authentication properties
 }
@@ -43,7 +43,7 @@ type AuthProps struct {
 	AuthMethod string
 	AuthData   []byte
 	Reason     string
-	UserProps  UserProperties
+	UserProps  UserProps
 }
 
 func (a *AuthProps) props() []byte {
@@ -80,7 +80,7 @@ func (a *AuthProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyAuthMethod]; ok {
-		a.AuthMethod, _, _ = getString(v)
+		a.AuthMethod, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyAuthData]; ok {
@@ -88,7 +88,7 @@ func (a *AuthProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		a.Reason, _, _ = getString(v)
+		a.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {

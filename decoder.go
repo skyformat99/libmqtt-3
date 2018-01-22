@@ -76,7 +76,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 
 	switch CtrlType(header >> 4) {
 	case CtrlConn:
-		protocol, body, err := getString(body)
+		protocol, body, err := getStringData(body)
 		if err != nil {
 			return nil, err
 		}
@@ -100,21 +100,21 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 		}
 		pkt.ProtoVersion = ProtoVersion(body[0])
 
-		if pkt.ClientID, body, err = getString(body[4:]); err != nil {
+		if pkt.ClientID, body, err = getStringData(body[4:]); err != nil {
 			return nil, err
 		}
 
 		if pkt.IsWill {
-			pkt.WillTopic, body, err = getString(body)
+			pkt.WillTopic, body, err = getStringData(body)
 			pkt.WillMessage, body, err = getBinaryData(body)
 		}
 
 		if hasUsername {
-			pkt.Username, body, err = getString(body)
+			pkt.Username, body, err = getStringData(body)
 		}
 
 		if hasPassword {
-			pkt.Password, _, err = getString(body)
+			pkt.Password, _, err = getStringData(body)
 		}
 
 		if err != nil {
@@ -125,7 +125,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 	case CtrlConnAck:
 		return &ConnAckPacket{Present: body[0]&0x01 == 0x01, Code: body[1]}, nil
 	case CtrlPublish:
-		topicName, body, err := getString(body)
+		topicName, body, err := getStringData(body)
 		if err != nil {
 			return nil, err
 		}
@@ -165,7 +165,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 		body = body[2:]
 		for len(body) > 0 {
 			var name string
-			if name, body, err = getString(body); err != nil {
+			if name, body, err = getStringData(body); err != nil {
 				return nil, err
 			}
 
@@ -197,7 +197,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 		body = body[2:]
 		for len(body) > 0 {
 			var name string
-			name, body, err = getString(body)
+			name, body, err = getStringData(body)
 			if err != nil {
 				return nil, err
 			}
@@ -239,7 +239,7 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 	switch CtrlType(header >> 4) {
 	case CtrlConn:
-		protocol, next, err := getString(body)
+		protocol, next, err := getStringData(body)
 		if err != nil {
 			return nil, err
 		}
@@ -270,21 +270,21 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		props, next = getRawProps(next[4:])
 		pkt.Props.setProps(props)
 
-		if pkt.ClientID, next, err = getString(next); err != nil {
+		if pkt.ClientID, next, err = getStringData(next); err != nil {
 			return nil, err
 		}
 
 		if pkt.IsWill {
-			pkt.WillTopic, next, err = getString(next)
+			pkt.WillTopic, next, err = getStringData(next)
 			pkt.WillMessage, next, err = getBinaryData(next)
 		}
 
 		if hasUsername {
-			pkt.Username, next, err = getString(next)
+			pkt.Username, next, err = getStringData(next)
 		}
 
 		if hasPassword {
-			pkt.Password, _, err = getString(next)
+			pkt.Password, _, err = getStringData(next)
 		}
 
 		if err != nil {
@@ -304,7 +304,7 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 		return pkt, nil
 	case CtrlPublish:
-		topicName, next, err := getString(body)
+		topicName, next, err := getStringData(body)
 		if err != nil {
 			return nil, err
 		}
@@ -386,7 +386,7 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		topics := make([]*Topic, 0)
 		for len(next) > 0 {
 			var name string
-			if name, next, err = getString(next); err != nil {
+			if name, next, err = getStringData(next); err != nil {
 				return nil, err
 			}
 
@@ -425,7 +425,7 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		pkt.TopicNames = make([]string, 0)
 		for len(next) > 0 {
 			var name string
-			name, next, err = getString(next)
+			name, next, err = getStringData(next)
 			if err != nil {
 				return nil, err
 			}

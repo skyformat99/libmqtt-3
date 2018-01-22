@@ -21,7 +21,7 @@ import "bytes"
 // PublishPacket is sent from a Client to a Server or from Server to a Client
 // to transport an Application Message.
 type PublishPacket struct {
-	basePacket
+	BasePacket
 	IsDup     bool
 	Qos       QosLevel
 	IsRetain  bool
@@ -75,7 +75,7 @@ type PublishProps struct {
 	CorrelationData []byte
 
 	// User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 
 	// SubIDs the identifier of the subscription (always no 0)
 	//
@@ -159,7 +159,7 @@ func (p *PublishProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyRespTopic]; ok {
-		p.RespTopic, _, _ = getString(v)
+		p.RespTopic, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyCorrelationData]; ok {
@@ -180,14 +180,14 @@ func (p *PublishProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyContentType]; ok {
-		p.ContentType, _, _ = getString(v)
+		p.ContentType, _, _ = getStringData(v)
 	}
 
 }
 
 // PubAckPacket is the response to a PublishPacket with QoS level 1.
 type PubAckPacket struct {
-	basePacket
+	BasePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubAckProps
@@ -208,7 +208,7 @@ type PubAckProps struct {
 	Reason string
 
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (p *PubAckProps) props() []byte {
@@ -233,7 +233,7 @@ func (p *PubAckProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		p.Reason, _, _ = getString(v)
+		p.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
@@ -244,7 +244,7 @@ func (p *PubAckProps) setProps(props map[byte][]byte) {
 // PubRecvPacket is the response to a PublishPacket with QoS 2.
 // It is the second packet of the QoS 2 protocol exchange.
 type PubRecvPacket struct {
-	basePacket
+	BasePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubRecvProps
@@ -265,7 +265,7 @@ type PubRecvProps struct {
 	Reason string
 
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (p *PubRecvProps) props() []byte {
@@ -290,7 +290,7 @@ func (p *PubRecvProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		p.Reason, _, _ = getString(v)
+		p.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
@@ -301,7 +301,7 @@ func (p *PubRecvProps) setProps(props map[byte][]byte) {
 // PubRelPacket is the response to a PubRecvPacket.
 // It is the third packet of the QoS 2 protocol exchange.
 type PubRelPacket struct {
-	basePacket
+	BasePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubRelProps
@@ -322,7 +322,7 @@ type PubRelProps struct {
 	Reason string
 
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (p *PubRelProps) props() []byte {
@@ -348,7 +348,7 @@ func (p *PubRelProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		p.Reason, _, _ = getString(v)
+		p.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {
@@ -359,7 +359,7 @@ func (p *PubRelProps) setProps(props map[byte][]byte) {
 // PubCompPacket is the response to a PubRelPacket.
 // It is the fourth and final packet of the QoS 892 2 protocol exchange. 893
 type PubCompPacket struct {
-	basePacket
+	BasePacket
 	PacketID uint16
 	Code     byte
 	Props    *PubCompProps
@@ -380,7 +380,7 @@ type PubCompProps struct {
 	Reason string
 
 	// UserProps User defined Properties
-	UserProps UserProperties
+	UserProps UserProps
 }
 
 func (p *PubCompProps) props() []byte {
@@ -405,7 +405,7 @@ func (p *PubCompProps) setProps(props map[byte][]byte) {
 	}
 
 	if v, ok := props[propKeyReasonString]; ok {
-		p.Reason, _, _ = getString(v)
+		p.Reason, _, _ = getStringData(v)
 	}
 
 	if v, ok := props[propKeyUserProps]; ok {

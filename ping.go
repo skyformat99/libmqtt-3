@@ -32,7 +32,7 @@ var (
 //
 // This Packet is used in Keep Alive processing
 type pingReqPacket struct {
-	basePacket
+	BasePacket
 }
 
 func (p *pingReqPacket) Type() CtrlType {
@@ -46,7 +46,7 @@ func (p *pingReqPacket) Bytes() []byte {
 // pingRespPacket is sent by the Server to the Client in response to
 // a pingReqPacket. It indicates that the Server is alive.
 type pingRespPacket struct {
-	basePacket
+	BasePacket
 }
 
 func (p *pingRespPacket) Type() CtrlType {
