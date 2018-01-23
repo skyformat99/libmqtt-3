@@ -314,13 +314,12 @@ func (c *clientConn) handleRecv() {
 		case <-c.parent.ctx.Done():
 			return
 		default:
-			pkt, err := Decode(c.parent.options.protoVersion, c.connRW)
+			pkt, err := Decode(c.protoVersion, c.connRW)
 			if err != nil {
 				c.parent.log.e("NET connection broken, server =", c.name, "err =", err)
 
 				// TODO send proper net error to net handler
 				//if err != ErrDecodeBadPacket {
-				//	c.parent.msgC <- newNetMsg(c.name, err)
 				//}
 				return
 			}

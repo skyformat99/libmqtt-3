@@ -55,7 +55,7 @@ func NewEtcdPersist(client *clientv3.Client) mqtt.PersistMethod {
 	return nil
 }
 
-// NewBoltPersist creates a new BoltPersist for session persist with provided bucket
+// NewBoltPersist creates a new boltPersist for session persist with provided bucket
 func NewBoltPersist(bucket *bolt.Bucket) mqtt.PersistMethod {
 	return nil
 }

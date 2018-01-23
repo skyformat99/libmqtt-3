@@ -81,13 +81,14 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 			return nil, err
 		}
 
+		if len(body) < 4 {
+			return nil, ErrDecodeBadPacket
+		}
+
 		if body[0] != byte(V311) {
 			return nil, ErrDecodeNoneV311Packet
 		}
 
-		if len(body) < 4 {
-			return nil, ErrDecodeBadPacket
-		}
 		hasUsername := body[1]&0x80 == 0x80
 		hasPassword := body[1]&0x40 == 0x40
 		pkt := &ConnPacket{
@@ -130,10 +131,6 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 			return nil, err
 		}
 
-		if len(body) < 2 {
-			return nil, ErrDecodeBadPacket
-		}
-
 		pub := &PublishPacket{
 			IsDup:     header&0x08 == 0x08,
 			Qos:       header & 0x06 >> 1,
@@ -142,6 +139,10 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 		}
 
 		if pub.Qos > Qos0 {
+			if len(body) < 2 {
+				return nil, ErrDecodeBadPacket
+			}
+
 			pub.PacketID = getUint16(body)
 			body = body[2:]
 		}
@@ -157,10 +158,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 	case CtrlPubComp:
 		return &PubCompPacket{PacketID: getUint16(body)}, nil
 	case CtrlSubscribe:
-		pkt := &SubscribePacket{
-			PacketID: getUint16(body),
-			Topics:   make([]*Topic, 0),
-		}
+		pkt := &SubscribePacket{PacketID: getUint16(body)}
 
 		body = body[2:]
 		for len(body) > 0 {
@@ -178,10 +176,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 		}
 		return pkt, nil
 	case CtrlSubAck:
-		pkt := &SubAckPacket{
-			PacketID: getUint16(body),
-			Codes:    make([]byte, 0),
-		}
+		pkt := &SubAckPacket{PacketID: getUint16(body)}
 
 		body = body[2:]
 		for i := range body {
@@ -189,10 +184,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 		}
 		return pkt, nil
 	case CtrlUnSub:
-		pkt := &UnSubPacket{
-			PacketID:   getUint16(body),
-			TopicNames: make([]string, 0),
-		}
+		pkt := &UnSubPacket{PacketID: getUint16(body)}
 
 		body = body[2:]
 		for len(body) > 0 {
@@ -244,12 +236,12 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 			return nil, err
 		}
 
-		if next[0] != byte(V5) {
-			return nil, ErrDecodeNoneV5Packet
-		}
-
 		if len(next) < 5 {
 			return nil, ErrDecodeBadPacket
+		}
+
+		if next[0] != byte(V5) {
+			return nil, ErrDecodeNoneV5Packet
 		}
 
 		hasUsername := next[1]&0x80 == 0x80
@@ -310,13 +302,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 		return pkt, nil
 	case CtrlPublish:
-		topicName, next, err := getStringData(body)
+		var topicName string
+		topicName, body, err = getStringData(body)
 		if err != nil {
 			return nil, err
-		}
-
-		if len(next) < 2 {
-			return nil, ErrDecodeBadPacket
 		}
 
 		pub := &PublishPacket{
@@ -328,20 +317,28 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		}
 
 		if pub.Qos > Qos0 {
-			pub.PacketID = getUint16(next)
-			next = next[2:]
+			if len(body) < 2 {
+				return nil, ErrDecodeBadPacket
+			}
+
+			pub.PacketID = getUint16(body)
+			body = body[2:]
 		}
 
 		var props map[byte][]byte
-		props, next, err = getRawProps(body[3:])
+		props, body, err = getRawProps(body)
 		if err != nil {
 			return nil, err
 		}
 		pub.Props.setProps(props)
 
-		pub.Payload = next
+		pub.Payload = body
 		return pub, nil
 	case CtrlPubAck:
+		if len(body) < 3 {
+			return nil, ErrDecodeBadPacket
+		}
+
 		pkt := &PubAckPacket{
 			PacketID: getUint16(body),
 			Code:     body[2],
@@ -356,11 +353,16 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 		return pkt, nil
 	case CtrlPubRecv:
+		if len(body) < 3 {
+			return nil, ErrDecodeBadPacket
+		}
+
 		pkt := &PubRecvPacket{
 			PacketID: getUint16(body),
 			Code:     body[2],
 			Props:    &PubRecvProps{},
 		}
+
 		props, _, err := getRawProps(body[3:])
 		if err != nil {
 			return nil, err
@@ -369,6 +371,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 		return pkt, nil
 	case CtrlPubRel:
+		if len(body) < 3 {
+			return nil, ErrDecodeBadPacket
+		}
+
 		pkt := &PubRelPacket{
 			PacketID: getUint16(body),
 			Code:     body[2],
@@ -382,6 +388,10 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 		return pkt, nil
 	case CtrlPubComp:
+		if len(body) < 3 {
+			return nil, ErrDecodeBadPacket
+		}
+
 		pkt := &PubCompPacket{
 			PacketID: getUint16(body),
 			Code:     body[2],
@@ -407,7 +417,6 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		}
 		pkt.Props.setProps(props)
 
-		topics := make([]*Topic, 0)
 		for len(next) > 0 {
 			var name string
 			if name, next, err = getStringData(next); err != nil {
@@ -418,10 +427,9 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 				return nil, ErrDecodeBadPacket
 			}
 
-			topics = append(topics, &Topic{Name: name, Qos: next[0]})
+			pkt.Topics = append(pkt.Topics, &Topic{Name: name, Qos: next[0]})
 			next = next[1:]
 		}
-		pkt.Topics = topics
 		return pkt, nil
 	case CtrlSubAck:
 		pkt := &SubAckPacket{
@@ -435,7 +443,6 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		}
 		pkt.Props.setProps(props)
 
-		pkt.Codes = make([]byte, 0)
 		for i := 0; i < len(next); i++ {
 			pkt.Codes = append(pkt.Codes, next[i])
 		}
@@ -452,7 +459,6 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		}
 		pkt.Props.setProps(props)
 
-		pkt.TopicNames = make([]string, 0)
 		for len(next) > 0 {
 			var name string
 			name, next, err = getStringData(next)

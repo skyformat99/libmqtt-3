@@ -30,5 +30,13 @@ func Fuzz(data []byte) int {
 		}
 		return 0
 	}
+
+	pkt, err = Decode(V5, bytes.NewReader(data))
+	if err != nil {
+		if pkt != nil {
+			panic("pkt != nil on error")
+		}
+		return 0
+	}
 	return 1
 }

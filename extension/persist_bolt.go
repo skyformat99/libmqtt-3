@@ -1,25 +1,27 @@
 package extension
 
 import (
+	"bytes"
+
 	"github.com/boltdb/bolt"
 
 	mqtt "github.com/goiiot/libmqtt"
 )
 
-type BoltPersist struct {
-	bucket *bolt.Bucket
+type boltPersist struct {
+	bucket   *bolt.Bucket
+	strategy *mqtt.PersistStrategy
 }
 
-// Name of BoltPersist is "BoltPersist"
-func (b *BoltPersist) Name() string {
+func (b *boltPersist) Name() string {
 	if b == nil {
 		return "<nil>"
 	}
 
-	return "BoltPersist"
+	return "boltPersist"
 }
 
-func (b *BoltPersist) Store(key string, p mqtt.Packet) error {
+func (b *boltPersist) Store(key string, p mqtt.Packet) error {
 	if b == nil {
 		return nil
 	}
@@ -28,21 +30,33 @@ func (b *BoltPersist) Store(key string, p mqtt.Packet) error {
 	return nil
 }
 
-func (b *BoltPersist) Load(key string) (mqtt.Packet, bool) {
+func (b *boltPersist) Load(key string) (mqtt.Packet, bool) {
 	if b == nil {
 		return nil, false
 	}
 
-	return nil, false
+	pkt, err := mqtt.Decode(mqtt.V311, bytes.NewReader(b.bucket.Get([]byte(key))))
+	if err != nil || pkt == nil {
+		return nil, false
+	}
+	return pkt, true
 }
 
-func (b *BoltPersist) Range(f func(string, mqtt.Packet) bool) {
+func (b *boltPersist) Range(f func(string, mqtt.Packet) bool) {
 	if b == nil {
 		return
 	}
+	b.bucket.ForEach(func(k, v []byte) error {
+		pkt, err := mqtt.Decode(mqtt.V311, bytes.NewReader(v))
+		if err == nil {
+			f(string(k), pkt)
+		}
+
+		return nil
+	})
 }
 
-func (b *BoltPersist) Delete(key string) error {
+func (b *boltPersist) Delete(key string) error {
 	if b == nil {
 		return nil
 	}

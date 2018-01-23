@@ -131,12 +131,13 @@ func getStringData(data []byte) (string, []byte, error) {
 }
 
 func getBinaryData(data []byte) ([]byte, []byte, error) {
-	if len(data) < 2 {
+	dataLen := len(data)
+	if dataLen < 2 {
 		return nil, nil, ErrDecodeBadPacket
 	}
 
 	end := int(getUint16(data)) + 2
-	if end > len(data) {
+	if end > dataLen {
 		// out of bounds
 		return nil, nil, ErrDecodeBadPacket
 	}
