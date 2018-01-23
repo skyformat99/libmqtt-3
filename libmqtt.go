@@ -63,7 +63,7 @@ func (BasePacket) bytes(p Packet) []byte {
 	return buf.Bytes()
 }
 
-// Version MQTT version of this packet
+// Version is the MQTT version of this packet
 func (b BasePacket) Version() ProtoVersion {
 	if b.ProtoVersion != 0 {
 		return b.ProtoVersion
@@ -83,28 +83,28 @@ func (t *Topic) String() string {
 }
 
 const (
-	maxMsgSize = 0xffffff7f
+	maxMsgSize = 268435455
 )
 
 // CtrlType is MQTT Control packet type
 type CtrlType byte
 
 const (
-	CtrlConn      CtrlType = 1  // CtrlConn Connect
-	CtrlConnAck   CtrlType = 2  // CtrlConnAck Connect Ack
-	CtrlPublish   CtrlType = 3  // CtrlPublish Publish
-	CtrlPubAck    CtrlType = 4  // CtrlPubAck Publish Ack
-	CtrlPubRecv   CtrlType = 5  // CtrlPubRecv Publish Received
-	CtrlPubRel    CtrlType = 6  // CtrlPubRel Publish Release
-	CtrlPubComp   CtrlType = 7  // CtrlPubComp Publish Complete
-	CtrlSubscribe CtrlType = 8  // CtrlSubscribe Subscribe
-	CtrlSubAck    CtrlType = 9  // CtrlSubAck Subscribe Ack
-	CtrlUnSub     CtrlType = 10 // CtrlUnSub UnSubscribe
-	CtrlUnSubAck  CtrlType = 11 // CtrlUnSubAck UnSubscribe Ack
-	CtrlPingReq   CtrlType = 12 // CtrlPingReq Ping Request
-	CtrlPingResp  CtrlType = 13 // CtrlPingResp Ping Response
-	CtrlDisConn   CtrlType = 14 // CtrlDisConn Disconnect
-	CtrlAuth      CtrlType = 15 // CtrlAuth Authentication (since MQTT 5.0)
+	CtrlConn      CtrlType = 1  // Connect
+	CtrlConnAck   CtrlType = 2  // connect ack
+	CtrlPublish   CtrlType = 3  // publish
+	CtrlPubAck    CtrlType = 4  // publish ack
+	CtrlPubRecv   CtrlType = 5  // publish received
+	CtrlPubRel    CtrlType = 6  // publish release
+	CtrlPubComp   CtrlType = 7  // publish complete
+	CtrlSubscribe CtrlType = 8  // subscribe
+	CtrlSubAck    CtrlType = 9  // subscribe ack
+	CtrlUnSub     CtrlType = 10 // unsubscribe
+	CtrlUnSubAck  CtrlType = 11 // unsubscribe ack
+	CtrlPingReq   CtrlType = 12 // ping request
+	CtrlPingResp  CtrlType = 13 // ping response
+	CtrlDisConn   CtrlType = 14 // disconnect
+	CtrlAuth      CtrlType = 15 // authentication (since MQTT 5)
 )
 
 // ProtoVersion MQTT Protocol ProtoVersion
@@ -188,170 +188,31 @@ const (
 // property identifiers
 
 const (
-	// PayloadFormatIndicator is
-	//
-	// Property type: byte
-	// Packet: Will, Publish
-	propKeyPayloadFormatIndicator = 1
-
-	// MessageExpiryInterval is
-	//
-	// Property type: 4 bytes int
-	// Packet: Will, Publish
-	propKeyMessageExpiryInterval = 2
-
-	// ContentType is
-	//
-	// Property type: utf-8 encoded string
-	// Packet: Will, Publish
-	propKeyContentType = 3
-
-	// ResponseTopic is
-	//
-	// Property type: utf-8 encoded string
-	// Packet: Will, Publish
-	propKeyRespTopic = 8
-
-	// CorrelationData is
-	//
-	// Property type: binary data
-	// Packet: Will, Publish
-	propKeyCorrelationData = 9
-
-	// SubscriptionIdentifier is
-	//
-	// Property type: variable bytes int
-	// Packet: Publish, Subscribe
-	propKeySubID = 11
-
-	// SessionExpiryInterval is
-	//
-	// Property type: 4 bytes int
-	// Packet: Connect, ConnAck, DisConn
-	propKeySessionExpiryInterval = 17
-
-	// AssignedClientIdentifier is
-	//
-	// Property type: utf-8 encoded string
-	// Packet: ConnAck
-	propKeyAssignedClientID = 18
-
-	// ServerKeepAlive is
-	//
-	// Property type: int (2 bytes)
-	// Packet: ConnAck
-	propKeyServerKeepalive = 19
-
-	// AuthenticationMethod is
-	//
-	// Property type: utf-8
-	// Packet: Connect, ConnAck, Auth
-	propKeyAuthMethod = 21
-
-	// AuthenticationData is
-	//
-	// Property type: binary data
-	// Packet: Connect, ConnAck, Auth
-	propKeyAuthData = 22
-
-	// RequestProblemInfo is
-	//
-	// Property type: byte
-	// Packet: Connect
-	propKeyReqProblemInfo = 23
-
-	// WillDelayInterval is
-	//
-	// Property type: int (4 bytes)
-	// Packet: Will
-	propKeyWillDelayInterval = 24
-
-	// RequestResponseInfo is
-	//
-	// Property type: byte
-	// Packet: Connect
-	propKeyReqRespInfo = 25
-
-	// ResponseInfo is
-	//
-	// Property type: utf-8
-	// Packet: ConnAck
-	propKeyRespInfo = 26
-
-	// ServerReference is
-	//
-	// Property type: utf-8 encoded string
-	// Packet: ConnAck, DisConn
-	propKeyServerRef = 28
-
-	// ReasonString is
-	//
-	// Property type: utf-8
-	// Packet: ConnAck, PubAck, PubRecv, PubRel,
-	// 		   PubComp, SubAck, UnSubAck, DisConn,
-	// 		   Auth
-	propKeyReasonString = 31
-
-	// ReceiveMax is
-	//
-	// Property type: int (2 bytes)
-	// Packet: Connect, ConnAck
-	propKeyMaxRecv = 33
-
-	// MaxTopicAlias is
-	//
-	// Property type: int (2 bytes)
-	// Packet: Connect, ConnAck
-	propKeyMaxTopicAlias = 34
-
-	// TopicAlias is
-	//
-	// Property type: int (2 bytes)
-	// Packet: Publish
-	propKeyTopicAlias = 35
-
-	// MaxQos is
-	//
-	// Property type: byte
-	// Packet: ConnAck
-	propKeyMaxQos = 36
-
-	// RetainAvail is
-	//
-	// Property type: byte
-	// Packet: ConnAck
-	propKeyRetainAvail = 37
-
-	// UserProps is
-	//
-	// Property type: utf-8 string pair
-	// Packet: Connect, ConnAck, Publish, Will,
-	// 		   PubAck, PubRecv, PubRel, PubComp,
-	// 		   Subscribe, SubAck, UnSub, UnSubAck,
-	// 		   DisConn, Auth
-	propKeyUserProps = 38
-
-	// MaxPacketSize is
-	//
-	// Property type: int (4 bytes)
-	// Packet: Connect, ConnAck
-	propKeyMaxPacketSize = 39
-
-	// WildcardSubscriptionAvail is
-	//
-	// Property type: byte
-	// Packet: ConnAck
-	propKeyWildcardSubAvail = 40
-
-	// SubscriptionIdentifierAvailable is
-	//
-	// Property type: byte
-	// Packet: ConnAck
-	propKeySubIDAvail = 41
-
-	// SharedSubscriptionAvailable is
-	//
-	// Property type: byte
-	// Packet: ConnAck
-	propKeySharedSubAvail = 42
+	propKeyPayloadFormatIndicator = 1  // byte, Packet: Will, Publish
+	propKeyMessageExpiryInterval  = 2  // Uint (4 bytes), Packet: Will, Publish
+	propKeyContentType            = 3  // utf-8, Packet: Will, Publish
+	propKeyRespTopic              = 8  // utf-8, Packet: Will, Publish
+	propKeyCorrelationData        = 9  // binary data, Packet: Will, Publish
+	propKeySubID                  = 11 // uint (variable bytes), Packet: Publish, Subscribe
+	propKeySessionExpiryInterval  = 17 // uint (4 bytes), Packet: Connect, ConnAck, DisConn\
+	propKeyAssignedClientID       = 18 // utf-8, Packet: ConnAck
+	propKeyServerKeepalive        = 19 // uint (2 bytes), Packet: ConnAck
+	propKeyAuthMethod             = 21 // utf-8, Packet: Connect, ConnAck, Auth
+	propKeyAuthData               = 22 // binary data, Packet: Connect, ConnAck, Auth
+	propKeyReqProblemInfo         = 23 // byte, Packet: Connect
+	propKeyWillDelayInterval      = 24 // uint (4 bytes), Packet: Will
+	propKeyReqRespInfo            = 25 // byte, Packet: Connect
+	propKeyRespInfo               = 26 // utf-8, Packet: ConnAck
+	propKeyServerRef              = 28 // utf-8, Packet: ConnAck, DisConn
+	propKeyReasonString           = 31 // utf-8, Packet: ConnAck, PubAck, PubRecv, PubRel, PubComp, SubAck, UnSubAck, DisConn, Auth
+	propKeyMaxRecv                = 33 // uint (2 bytes), Packet: Connect, ConnAck
+	propKeyMaxTopicAlias          = 34 // uint (2 bytes), Packet: Connect, ConnAck
+	propKeyTopicAlias             = 35 // uint (2 bytes), Packet: Publish
+	propKeyMaxQos                 = 36 // byte, Packet: ConnAck
+	propKeyRetainAvail            = 37 // byte, Packet: ConnAck
+	propKeyUserProps              = 38 // utf-8 string pair, Packet: Connect, ConnAck, Publish, Will, PubAck, PubRecv, PubRel, PubComp, Subscribe, SubAck, UnSub, UnSubAck, DisConn, Auth
+	propKeyMaxPacketSize          = 39 // uint (4 bytes), Packet: Connect, ConnAck
+	propKeyWildcardSubAvail       = 40 // byte, Packet: ConnAck
+	propKeySubIDAvail             = 41 // byte, Packet: ConnAck
+	propKeySharedSubAvail         = 42 // byte, Packet: ConnAck
 )

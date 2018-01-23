@@ -22,7 +22,7 @@ import (
 
 var (
 	// ErrUnsupportedVersion unsupported mqtt ProtoVersion
-	ErrUnsupportedVersion = errors.New("trying encode unsupported mqtt ProtoVersion ")
+	ErrUnsupportedVersion = errors.New("trying encode/decode packet with unsupported MQTT version ")
 
 	// ErrEncodeBadPacket happens when trying to encode none MQTT packet
 	ErrEncodeBadPacket = errors.New("trying encode none MQTT packet ")

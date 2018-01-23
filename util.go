@@ -124,10 +124,10 @@ func writeVarInt(n int, w BufferedWriter) error {
 func getStringData(data []byte) (string, []byte, error) {
 	b, next, err := getBinaryData(data)
 	if err == nil {
-		return string(b), next, err
+		return string(b), next, nil
 	}
 
-	return "", next, err
+	return "", nil, err
 }
 
 func getBinaryData(data []byte) ([]byte, []byte, error) {
@@ -135,12 +135,12 @@ func getBinaryData(data []byte) ([]byte, []byte, error) {
 		return nil, nil, ErrDecodeBadPacket
 	}
 
-	length := int(getUint16(data))
-	if length+2 > len(data) {
+	end := int(getUint16(data)) + 2
+	if end > len(data) {
 		// out of bounds
 		return nil, nil, ErrDecodeBadPacket
 	}
-	return data[2 : length+2], data[length+2:], nil
+	return data[2:end], data[end:], nil
 }
 
 func getRemainLength(r io.ByteReader) (length int, byteCount int) {
@@ -172,17 +172,18 @@ func getUint32(d []byte) uint32 {
 // | prop body.. |
 // |   payload   |
 func getRawProps(data []byte) (props map[byte][]byte, next []byte, err error) {
-	propsLen, byteLen := getRemainLength(bytes.NewReader(data))
-	propsBytes := data[byteLen : propsLen+byteLen]
-	next = data[propsLen+byteLen:]
-	props = make(map[byte][]byte)
-
 	defer func() {
 		e := recover()
 		if e != nil {
 			err = ErrDecodeBadPacket
 		}
 	}()
+
+	propsLen, byteLen := getRemainLength(bytes.NewReader(data))
+	propsBytes := data[byteLen : propsLen+byteLen]
+	next = data[propsLen+byteLen:]
+	props = make(map[byte][]byte)
+
 	for i := 0; i < propsLen; {
 		var p []byte
 		switch propsBytes[0] {
@@ -216,7 +217,7 @@ func getRawProps(data []byte) (props map[byte][]byte, next []byte, err error) {
 		case propKeyReqRespInfo:
 			p = propsBytes[1:2]
 		case propKeyRespInfo:
-			p = propsBytes[1:2]
+			p = propsBytes[1 : 3+getUint16(propsBytes[1:3])]
 		case propKeyServerRef:
 			p = propsBytes[1 : 3+getUint16(propsBytes[1:3])]
 		case propKeyReasonString:
@@ -247,7 +248,7 @@ func getRawProps(data []byte) (props map[byte][]byte, next []byte, err error) {
 			err = ErrDecodeBadPacket
 			return
 		}
-		props[propsBytes[0]] = p
+		props[propsBytes[0]] = append(props[propsBytes[0]], p...)
 		propsBytes = propsBytes[1+len(p):]
 		i += 1 + len(p)
 	}
@@ -258,16 +259,10 @@ func getRawProps(data []byte) (props map[byte][]byte, next []byte, err error) {
 func getUserProps(data []byte) UserProps {
 	props := make(UserProps)
 	strKey, next, _ := getStringData(data)
-	for ; next != nil; strKey, next, _ = getStringData(data) {
+	for ; next != nil; strKey, next, _ = getStringData(next) {
 		var val string
 		val, next, _ = getStringData(next)
-
-		if _, ok := props[strKey]; ok {
-			props[strKey] = append(props[strKey], val)
-		} else {
-			props[strKey] = make([]string, 1)
-			props[strKey][0] = val
-		}
+		props[strKey] = append(props[strKey], val)
 	}
 	return props
 }
