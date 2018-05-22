@@ -1,5 +1,5 @@
 /*
- * Copyright Go-IIoT (https://github.com/goiiot)
+ * Copyright GoIIoT (https://github.com/goiiot)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,12 @@ public class Client {
     Callback mCallback;
     TopicMessageCallback mMainTopicCallback;
 
+    // TODO: complete separate topic message callback
+    // private Map<String, TopicMessageCallback> mTopicCallbacks;
+
     Client(int id) {
         mID = id;
+        // mTopicCallbacks = new HashMap<>();
     }
 
     public void setCallback(Callback callback) {
@@ -44,6 +48,8 @@ public class Client {
     public void handle(String topic, TopicMessageCallback callback) {
         if (callback != null) {
             LibMQTT._handle(mID, topic, callback);
+            mMainTopicCallback = callback;
+            // mTopicCallbacks.put(topic, callback);
         }
     }
 

@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	mq "github.com/goiiot/libmqtt"
+	mqtt "github.com/goiiot/libmqtt"
 )
 
 func execConn(args []string) bool {
@@ -33,10 +33,10 @@ func execConn(args []string) bool {
 		return false
 	}
 
-	options := make([]mq.Option, 0)
+	options := make([]mqtt.Option, 0)
 	if len(args) == 2 {
 		opts := strings.Split(args[1], ",")
-		var willQos mq.QosLevel
+		var willQos mqtt.QosLevel
 		var sslSkipVerify, ssl, will, willRetain bool
 		var sslCert, sslKey, sslCA, sslServer, willTopic, willMsg string
 		for _, v := range opts {
@@ -48,7 +48,7 @@ func execConn(args []string) bool {
 
 			switch kv[0] {
 			case "clean":
-				options = append(options, mq.WithCleanSession(kv[0] == "y"))
+				options = append(options, mqtt.WithCleanSession(kv[0] == "y"))
 			case "ssl":
 				ssl = kv[1] == "y"
 			case "ssl_cert":
@@ -71,7 +71,7 @@ func execConn(args []string) bool {
 					invalidQos()
 					return true
 				}
-				willQos = mq.QosLevel(qos)
+				willQos = mqtt.QosLevel(qos)
 			case "will_msg":
 				willMsg = kv[1]
 			case "will_retain":
@@ -79,13 +79,13 @@ func execConn(args []string) bool {
 			}
 		}
 		if ssl {
-			options = append(options, mq.WithTLS(sslCert, sslKey, sslCA, sslServer, sslSkipVerify))
+			options = append(options, mqtt.WithTLS(sslCert, sslKey, sslCA, sslServer, sslSkipVerify))
 		}
 		if will {
-			options = append(options, mq.WithWill(willTopic, willQos, willRetain, []byte(willMsg)))
+			options = append(options, mqtt.WithWill(willTopic, willQos, willRetain, []byte(willMsg)))
 		}
 	}
-	options = append(options, mq.WithServer(args[0]))
+	options = append(options, mqtt.WithServer(args[0]))
 	newClient(options)
 	return true
 }
@@ -100,13 +100,13 @@ func execDisConn(args []string) bool {
 	return true
 }
 
-func newClient(options []mq.Option) {
+func newClient(options []mqtt.Option) {
 	if client != nil {
 		client.Destroy(true)
 	}
 
 	var err error
-	client, err = mq.NewClient(options...)
+	client, err = mqtt.NewClient(options...)
 	if err != nil {
 		println(err.Error())
 		return

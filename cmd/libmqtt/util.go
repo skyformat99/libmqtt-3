@@ -17,13 +17,13 @@
 package main
 
 import (
-	mq "github.com/goiiot/libmqtt"
+	mqtt "github.com/goiiot/libmqtt"
 )
 
 func connHandler(server string, code byte, err error) {
 	if err != nil {
 		println("\nconnect to server error:", err)
-	} else if code != mq.CodeSuccess {
+	} else if code != mqtt.CodeSuccess {
 		println("\nconnection rejected by server, code:", code)
 	} else {
 		println("\nconnected to server")
@@ -40,7 +40,7 @@ func pubHandler(topic string, err error) {
 	print(lineStart)
 }
 
-func subHandler(topics []*mq.Topic, err error) {
+func subHandler(topics []*mqtt.Topic, err error) {
 	if err != nil {
 		println("\nsub", topics, "failed, error =", err)
 	} else {
@@ -63,7 +63,7 @@ func netHandler(server string, err error) {
 	print(lineStart)
 }
 
-func topicHandler(topic string, qos mq.QosLevel, msg []byte) {
+func topicHandler(topic string, qos mqtt.QosLevel, msg []byte) {
 	println("\n[MSG] topic:", topic, "msg:", string(msg), "qos:", qos)
 	print(lineStart)
 }

@@ -24,7 +24,7 @@ import (
 	"strings"
 	"sync"
 
-	mq "github.com/goiiot/libmqtt"
+	mqtt "github.com/goiiot/libmqtt"
 )
 
 const (
@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	client mq.Client
+	client mqtt.Client
 )
 
 func main() {

@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	mq "github.com/goiiot/libmqtt"
+	mqtt "github.com/goiiot/libmqtt"
 )
 
 func execSub(args []string) bool {
@@ -29,7 +29,7 @@ func execSub(args []string) bool {
 		return true
 	}
 
-	topics := make([]*mq.Topic, 0)
+	topics := make([]*mqtt.Topic, 0)
 	for _, v := range args {
 		topicStr := strings.Split(v, ",")
 		if len(topicStr) != 2 {
@@ -41,7 +41,7 @@ func execSub(args []string) bool {
 			subUsage()
 			return true
 		}
-		topics = append(topics, &mq.Topic{Name: topicStr[0], Qos: mq.QosLevel(qos)})
+		topics = append(topics, &mqtt.Topic{Name: topicStr[0], Qos: mqtt.QosLevel(qos)})
 	}
 	for _, t := range topics {
 		client.Handle(t.Name, topicHandler)

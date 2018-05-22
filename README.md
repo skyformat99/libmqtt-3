@@ -16,8 +16,7 @@ Feature rich modern MQTT library in pure Go, for `Go`, `C/C++`, `Java`
 
 ## Features
 
-1. MQTT v3.1.1 client support (async only, support for MQTT v5 is under development)
-1. HTTP server like API
+1. MQTT v3.1.1/v5.0 client support (async only)
 1. High performance and less memory footprint (see [Benchmark](#benchmark))
 1. Customizable topic routing (see [Topic Routing](#topic-routing))
 1. Multiple Builtin session persist methods (see [Session Persist](#session-persist))
@@ -164,7 +163,7 @@ Please refer to [java - README.md](./java/README.md)
 
 ### As a command line client
 
-Please refer to [cmd - README.md](./cmd/README.md)
+Please refer to [cmd/libmqtt - README.md](./cmd/libmqtt/README.md)
 
 ### As MQTT infrastructure
 

@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	mq "github.com/goiiot/libmqtt"
+	mqtt "github.com/goiiot/libmqtt"
 )
 
 func execPub(args []string) bool {
@@ -29,7 +29,7 @@ func execPub(args []string) bool {
 		return true
 	}
 
-	pubs := make([]*mq.PublishPacket, 0)
+	pubs := make([]*mqtt.PublishPacket, 0)
 	for _, v := range args {
 		pubStr := strings.Split(v, ",")
 		if len(pubStr) != 3 {
@@ -41,9 +41,9 @@ func execPub(args []string) bool {
 			pubUsage()
 			return false
 		}
-		pubs = append(pubs, &mq.PublishPacket{
+		pubs = append(pubs, &mqtt.PublishPacket{
 			TopicName: pubStr[0],
-			Qos:       mq.QosLevel(qos),
+			Qos:       mqtt.QosLevel(qos),
 			Payload:   []byte(pubStr[2]),
 		})
 	}

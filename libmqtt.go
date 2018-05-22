@@ -50,7 +50,7 @@ type BasePacket struct {
 	ProtoVersion ProtoVersion
 }
 
-func (BasePacket) bytes(p Packet) []byte {
+func (*BasePacket) bytes(p Packet) []byte {
 	if p == nil {
 		return nil
 	}
@@ -64,7 +64,7 @@ func (BasePacket) bytes(p Packet) []byte {
 }
 
 // Version is the MQTT version of this packet
-func (b BasePacket) Version() ProtoVersion {
+func (b *BasePacket) Version() ProtoVersion {
 	if b.ProtoVersion != 0 {
 		return b.ProtoVersion
 	}

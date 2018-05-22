@@ -15,15 +15,15 @@ A command line MQTT client built on top of libmqtt.
 1. Go get and build this command line client
 
 ```bash
-go get github.com/goiiot/libmqtt
-cd $GOPATH/src/github.com/goiiot/libmqtt/cmd
-go build -o libmqttc # or use `make` if you have make installed
+go get github.com/goiiot/libmqtt/cmd/libmqtt
 ```
 
-2. Run, and explore usages
+2. Run, and explore usages (include `$GOPATH/bin` in `PATH`)
 
 ```bash
-./libmqttc # then type `h` or `help` for usage reference
+libmqtt
+
+# then type `h` or `help` for usage reference
 ```
 
 ## LICENSE
