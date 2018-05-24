@@ -87,6 +87,7 @@ func newLogger(l LogLevel) *logger {
 	return lo
 }
 
+// verbose
 func (l *logger) v(data ...interface{}) {
 	if l == nil || l.verbose == nil {
 		return
@@ -94,6 +95,7 @@ func (l *logger) v(data ...interface{}) {
 	l.verbose.Println(data...)
 }
 
+// debug
 func (l *logger) d(data ...interface{}) {
 	if l == nil || l.debug == nil {
 		return
@@ -101,6 +103,7 @@ func (l *logger) d(data ...interface{}) {
 	l.debug.Println(data...)
 }
 
+// info
 func (l *logger) i(data ...interface{}) {
 	if l == nil || l.info == nil {
 		return
@@ -108,6 +111,7 @@ func (l *logger) i(data ...interface{}) {
 	l.info.Println(data...)
 }
 
+// warning
 func (l *logger) w(data ...interface{}) {
 	if l == nil || l.warning == nil {
 		return
@@ -115,6 +119,7 @@ func (l *logger) w(data ...interface{}) {
 	l.warning.Println(data...)
 }
 
+// error
 func (l *logger) e(data ...interface{}) {
 	if l == nil || l.error == nil {
 		return

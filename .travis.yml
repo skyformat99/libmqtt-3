@@ -12,13 +12,13 @@ go:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y curl unzip
-  - curl -fsSL http://emqtt.com/static/brokers/emqttd-docker-v2.3.1.zip -o emqttd-docker-v2.3.1.zip
-  - unzip emqttd-docker-v2.3.1.zip
-  - docker load < emqttd-docker-v2.3.1
+  - curl -fsSL http://emqtt.com/static/brokers/emqttd-docker-v2.3.8.zip -o emqttd-docker-v2.3.8.zip
+  - unzip emqttd-docker-v2.3.8.zip
+  - docker load < emqttd-docker-v2.3.8
 
 before_script:
   - go get -t -v ./...
-  - docker run -d --name emq -p 1883:1883 -p 8083:8083 -p 8883:8883 -p 8084:8084 -p 18083:18083 emqttd-docker-v2.3.1
+  - docker run -d --name emq -p 1883:1883 -p 8083:8083 -p 8883:8883 -p 8084:8084 -p 18083:18083 emqttd-docker-v2.3.8
   - sleep 60
 
 script:
