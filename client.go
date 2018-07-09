@@ -508,6 +508,7 @@ func (c *client) connect(server string, h ConnHandler, version ProtoVersion, rec
 		logicSendC:   make(chan Packet),
 		netRecvC:     make(chan Packet),
 	}
+	connImpl.ctx, connImpl.exit = context.WithCancel(c.ctx)
 
 	c.workers.Add(2)
 	go connImpl.handleSend()

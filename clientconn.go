@@ -18,6 +18,7 @@ package libmqtt
 
 import (
 	"bufio"
+	"context"
 	"net"
 	"time"
 )
@@ -25,14 +26,16 @@ import (
 // clientConn is the wrapper of connection to server
 // tend to actual packet send and receive
 type clientConn struct {
-	protoVersion ProtoVersion      // mqtt protocol version
-	parent       *client           // client which created this connection
-	name         string            // server addr info
-	conn         net.Conn          // connection to server
-	connRW       *bufio.ReadWriter // make buffered connection
-	logicSendC   chan Packet       // logic send channel
-	netRecvC     chan Packet       // received packet from server
-	keepaliveC   chan int          // keepalive packet
+	protoVersion ProtoVersion       // mqtt protocol version
+	parent       *client            // client which created this connection
+	name         string             // server addr info
+	conn         net.Conn           // connection to server
+	connRW       *bufio.ReadWriter  // make buffered connection
+	logicSendC   chan Packet        // logic send channel
+	netRecvC     chan Packet        // received packet from server
+	keepaliveC   chan int           // keepalive packet
+	ctx          context.Context    // context for single connection
+	exit         context.CancelFunc // terminate this connection if necessary
 }
 
 // start mqtt logic
@@ -50,7 +53,7 @@ func (c *clientConn) logic() {
 
 	for {
 		select {
-		case <-c.parent.ctx.Done():
+		case <-c.ctx.Done():
 			return
 		case pkt, more := <-c.netRecvC:
 			if !more {
@@ -203,13 +206,13 @@ func (c *clientConn) keepalive() {
 
 	for {
 		select {
-		case <-c.parent.ctx.Done():
+		case <-c.ctx.Done():
 			return
 		case <-t.C:
 			c.send(PingReqPacket)
 
 			select {
-			case <-c.parent.ctx.Done():
+			case <-c.ctx.Done():
 				return
 			case _, more := <-c.keepaliveC:
 				if !more {
@@ -219,6 +222,8 @@ func (c *clientConn) keepalive() {
 				timeoutTimer.Reset(timeout)
 			case <-timeoutTimer.C:
 				c.parent.log.i("NET keepalive timeout")
+				// exit client connection
+				c.exit()
 				return
 			}
 		}
@@ -236,7 +241,7 @@ func (c *clientConn) handleSend() {
 
 	for {
 		select {
-		case <-c.parent.ctx.Done():
+		case <-c.ctx.Done():
 			return
 		case pkt, more := <-c.parent.sendC:
 			if !more {
@@ -311,7 +316,7 @@ func (c *clientConn) handleRecv() {
 
 	for {
 		select {
-		case <-c.parent.ctx.Done():
+		case <-c.ctx.Done():
 			return
 		default:
 			pkt, err := Decode(c.protoVersion, c.connRW)
@@ -321,6 +326,9 @@ func (c *clientConn) handleRecv() {
 				// TODO send proper net error to net handler
 				//if err != ErrDecodeBadPacket {
 				//}
+
+				// exit client connection
+				c.exit()
 				return
 			}
 
