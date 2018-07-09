@@ -17,13 +17,39 @@
 package libmqtt
 
 import (
+	"bytes"
 	"testing"
+
+	std "github.com/eclipse/paho.mqtt.golang/packets"
 )
+
+var (
+	testPingReqMsg       = PingReqPacket
+	testPingReqMsgBytes  []byte
+	testPingRespMsg      = PingRespPacket
+	testPingRespMsgBytes []byte
+)
+
+func initTestData_Ping() {
+	// pingreq
+	reqBuf := &bytes.Buffer{}
+	req := std.NewControlPacket(std.Pingreq).(*std.PingreqPacket)
+	req.Write(reqBuf)
+	testPingReqMsgBytes = reqBuf.Bytes()
+
+	// pingresp
+	respBuf := &bytes.Buffer{}
+	resp := std.NewControlPacket(std.Pingresp).(*std.PingrespPacket)
+	resp.Write(respBuf)
+	testPingRespMsgBytes = respBuf.Bytes()
+}
 
 func TestPingReqPacket_Bytes(t *testing.T) {
 	testV311Bytes(testPingReqMsg, testPingReqMsgBytes, t)
+	testV5Bytes(testPingReqMsg, testPingReqMsgBytes, t)
 }
 
 func TestPingRespPacket_Bytes(t *testing.T) {
 	testV311Bytes(testPingRespMsg, testPingRespMsgBytes, t)
+	testV5Bytes(testPingRespMsg, testPingRespMsgBytes, t)
 }

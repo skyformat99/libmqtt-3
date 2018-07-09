@@ -215,6 +215,7 @@ func (p *PubAckProps) props() []byte {
 	if p == nil {
 		return nil
 	}
+
 	result := make([]byte, 0)
 	if p.Reason != "" {
 		result = append(result, propKeyReasonString)
