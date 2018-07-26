@@ -199,6 +199,14 @@ func WithTLS(certFile, keyFile, caCert, serverNameOverride string, skipVerify bo
 	}
 }
 
+// WithCustomTLS replaces the TLS options with a custom tls.Config 
+func WithCustomTLS(config *tls.Config) Option {
+	return func(c *client) error {
+		c.options.tlsConfig = config
+		return nil
+	}
+}
+
 // WithDialTimeout for connection time out (time in second)
 func WithDialTimeout(timeout uint16) Option {
 	return func(c *client) error {
