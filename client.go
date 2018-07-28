@@ -22,6 +22,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"io"
 	"io/ioutil"
 	"math"
 	"net"
@@ -133,17 +134,56 @@ func WithServer(servers ...string) Option {
 	}
 }
 
+func WithTLSReader(certReader, keyReader, caReader io.Reader, serverNameOverride string, skipVerify bool) Option {
+	return func(c *client) error {
+		b, err := ioutil.ReadAll(certReader)
+		if err != nil {
+			return err
+		}
+
+		cp := x509.NewCertPool()
+		if !cp.AppendCertsFromPEM(b) {
+			return err
+		}
+
+		// load cert-key pair
+		certBytes, err := ioutil.ReadAll(certReader)
+		if err != nil {
+			return err
+		}
+		keyBytes, err := ioutil.ReadAll(keyReader)
+		if err != nil {
+			return err
+		}
+		cert, err := tls.X509KeyPair(certBytes, keyBytes)
+		if err != nil {
+			return err
+		}
+
+		c.options.tlsConfig = &tls.Config{
+			Certificates:       []tls.Certificate{cert},
+			InsecureSkipVerify: skipVerify,
+			ClientCAs:          cp,
+			ServerName:         serverNameOverride,
+		}
+
+		return nil
+	}
+}
+
 // WithTLS for client tls certification
-func WithTLS(certFile, keyFile string, caCert string, serverNameOverride string, skipVerify bool) Option {
+func WithTLS(certFile, keyFile, caCert, serverNameOverride string, skipVerify bool) Option {
 	return func(c *client) error {
 		b, err := ioutil.ReadFile(caCert)
 		if err != nil {
 			return err
 		}
+
 		cp := x509.NewCertPool()
 		if !cp.AppendCertsFromPEM(b) {
 			return err
 		}
+
 		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
 			return err
