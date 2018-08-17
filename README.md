@@ -99,13 +99,13 @@ client.Handle("bar", func(topic string, qos libmqtt.QosLevel, msg []byte) {
 
 ```go
 // connect to server
-client.Connect(func(server string, code libmqtt.ConnAckCode, err error) {
+client.Connect(func(server string, code byte, err error) {
     if err != nil {
         // failed
         panic(err)
     }
 
-    if code != libmqtt.ConnAccepted {
+    if libmqtt.CtrlType(code) != libmqtt.CtrlConn {
         // server rejected or in error
         panic(code)
     }
