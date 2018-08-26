@@ -55,7 +55,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 
 	bytesToRead, _ := getRemainLength(r)
 	if bytesToRead == 0 {
-		switch CtrlType(header >> 4) {
+		switch header >> 4 {
 		case CtrlPingReq:
 			return PingReqPacket, nil
 		case CtrlPingResp:
@@ -74,7 +74,7 @@ func decodeV311Packet(r BufferedReader) (Packet, error) {
 		return nil, err
 	}
 
-	switch CtrlType(header >> 4) {
+	switch header >> 4 {
 	case CtrlConn:
 		protocol, body, err := getStringData(body)
 		if err != nil {
@@ -212,7 +212,7 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 
 	bytesToRead, _ := getRemainLength(r)
 	if bytesToRead == 0 {
-		switch CtrlType(header >> 4) {
+		switch header >> 4 {
 		case CtrlPingReq:
 			return PingReqPacket, nil
 		case CtrlPingResp:
@@ -229,7 +229,7 @@ func decodeV5Packet(r BufferedReader) (Packet, error) {
 		return nil, err
 	}
 
-	switch CtrlType(header >> 4) {
+	switch header >> 4 {
 	case CtrlConn:
 		protocol, next, err := getStringData(body)
 		if err != nil {

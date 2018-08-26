@@ -87,7 +87,7 @@ const (
 )
 
 // CtrlType is MQTT Control packet type
-type CtrlType byte
+type CtrlType = byte
 
 const (
 	CtrlConn      CtrlType = 1  // Connect
