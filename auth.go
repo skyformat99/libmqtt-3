@@ -16,6 +16,8 @@
 
 package libmqtt
 
+import "bytes"
+
 // AuthPacket Client <-> Server
 // as part of an extended authentication exchange,
 // such as challenge / response authentication.
@@ -35,7 +37,34 @@ func (a *AuthPacket) Type() CtrlType {
 }
 
 func (a *AuthPacket) Bytes() []byte {
-	return a.bytes(a)
+	if a == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	a.WriteTo(w)
+	return w.Bytes()
+}
+
+func (a *AuthPacket) WriteTo(w BufferedWriter) error {
+	if a == nil {
+		return ErrEncodeBadPacket
+	}
+
+	w.WriteByte(byte(CtrlAuth << 4))
+	props := a.Props.props()
+
+	tmpBuf := &bytes.Buffer{}
+	writeVarInt(len(props), tmpBuf)
+
+	if err := writeVarInt(len(props)+1+tmpBuf.Len(), w); err != nil {
+		return err
+	}
+
+	w.WriteByte(a.Code)
+	tmpBuf.WriteTo(w)
+	_, err := w.Write(props)
+	return err
 }
 
 // AuthProps properties of AuthPacket

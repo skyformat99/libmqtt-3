@@ -45,11 +45,9 @@ func initTestData_Ping() {
 }
 
 func TestPingReqPacket_Bytes(t *testing.T) {
-	testV311Bytes(testPingReqMsg, testPingReqMsgBytes, t)
-	testV5Bytes(testPingReqMsg, testPingReqMsgBytes, t)
+	testPacketBytes(testPingReqMsg, testPingReqMsgBytes, t)
 }
 
 func TestPingRespPacket_Bytes(t *testing.T) {
-	testV311Bytes(testPingRespMsg, testPingRespMsgBytes, t)
-	testV5Bytes(testPingRespMsg, testPingRespMsgBytes, t)
+	testPacketBytes(testPingRespMsg, testPingRespMsgBytes, t)
 }

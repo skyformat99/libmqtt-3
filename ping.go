@@ -16,6 +16,8 @@
 
 package libmqtt
 
+import "bytes"
+
 var (
 	// PingReqPacket is the final instance of pingReqPacket
 	PingReqPacket = &pingReqPacket{}
@@ -40,7 +42,27 @@ func (p *pingReqPacket) Type() CtrlType {
 }
 
 func (p *pingReqPacket) Bytes() []byte {
-	return p.bytes(p)
+	if p == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	p.WriteTo(w)
+	return w.Bytes()
+}
+
+func (p *pingReqPacket) WriteTo(w BufferedWriter) error {
+	if p == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch p.ProtoVersion {
+	case 0, V311, V5:
+		w.WriteByte(byte(CtrlPingReq << 4))
+		return w.WriteByte(0x00)
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // pingRespPacket is sent by the Server to the Client in response to
@@ -54,5 +76,25 @@ func (p *pingRespPacket) Type() CtrlType {
 }
 
 func (p *pingRespPacket) Bytes() []byte {
-	return p.bytes(p)
+	if p == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	p.WriteTo(w)
+	return w.Bytes()
+}
+
+func (p *pingRespPacket) WriteTo(w BufferedWriter) error {
+	if p == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch p.ProtoVersion {
+	case 0, V311, V5:
+		w.WriteByte(byte(CtrlPingResp << 4))
+		return w.WriteByte(0x00)
+	default:
+		return ErrUnsupportedVersion
+	}
 }

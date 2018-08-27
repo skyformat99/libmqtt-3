@@ -107,7 +107,10 @@ func initTestData_Pub() {
 
 func TestPublishPacket_Bytes(t *testing.T) {
 	for i, p := range testPubMsgs {
-		testV311Bytes(p, testPubMsgBytesV311[i], t)
+		p.ProtoVersion = V311
+		testPacketBytes(p, testPubMsgBytesV311[i], t)
+		// p.ProtoVersion = V5
+		// testPacketBytes(p, testPubMsgBytesV5[i], t)
 		// testV5Bytes(p, testPubMsgBytesV5[i], t)
 	}
 }
@@ -121,8 +124,10 @@ func TestPubProps_SetProps(t *testing.T) {
 }
 
 func TestPubAckPacket_Bytes(t *testing.T) {
-	testV311Bytes(testPubAckMsg, testPubAckMsgBytesV311, t)
-	// testV5Bytes(testPubAckMsg, testPubAckMsgBytesV5, t)
+	testPubAckMsg.ProtoVersion = V311
+	testPacketBytes(testPubAckMsg, testPubAckMsgBytesV311, t)
+	// testPubAckMsg.ProtoVersion = V5
+	// testPacketBytes(testPubAckMsg, testPubAckMsgBytesV5, t)
 }
 
 func TestPubAckProps_Props(t *testing.T) {
@@ -134,8 +139,10 @@ func TestPubAckProps_SetProps(t *testing.T) {
 }
 
 func TestPubRecvPacket_Bytes(t *testing.T) {
-	testV311Bytes(testPubRecvMsg, testPubRecvMsgBytesV311, t)
-	// testV5Bytes(testPubRecvMsg, testPubRecvMsgBytesV5, t)
+	testPubRecvMsg.ProtoVersion = V311
+	testPacketBytes(testPubRecvMsg, testPubRecvMsgBytesV311, t)
+	// testPubRecvMsg.ProtoVersion = V5
+	// testPacketBytes(testPubRecvMsg, testPubRecvMsgBytesV5, t)
 }
 
 func TestPubRecvProps_Props(t *testing.T) {
@@ -147,8 +154,10 @@ func TestPubRecvProps_SetProps(t *testing.T) {
 }
 
 func TestPubRelPacket_Bytes(t *testing.T) {
-	testV311Bytes(testPubRelMsg, testPubRelMsgBytesV311, t)
-	// testV5Bytes(testPubRelMsg, testPubRelMsgBytesV5, t)
+	testPubRelMsg.ProtoVersion = V311
+	testPacketBytes(testPubRelMsg, testPubRelMsgBytesV311, t)
+	// testPubRelMsg.ProtoVersion = V5
+	// testPacketBytes(testPubRelMsg, testPubRelMsgBytesV5, t)
 }
 
 func TestPubRelProps_Props(t *testing.T) {
@@ -160,8 +169,10 @@ func TestPubRelProps_SetProps(t *testing.T) {
 }
 
 func TestPubCompPacket_Bytes(t *testing.T) {
-	testV311Bytes(testPubCompMsg, testPubCompMsgBytesV311, t)
-	// testV5Bytes(testPubCompMsg, testPubCompMsgBytesV5, t)
+	testPubCompMsg.ProtoVersion = V311
+	testPacketBytes(testPubCompMsg, testPubCompMsgBytesV311, t)
+	// testPubCompMsg.ProtoVersion = V5
+	// testPacketBytes(testPubCompMsg, testPubCompMsgBytesV5, t)
 }
 
 func TestPubCompProps_Props(t *testing.T) {

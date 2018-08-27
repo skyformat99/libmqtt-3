@@ -20,6 +20,20 @@ test:
 test-auth:
 	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestAuth
 
+test-conn:
+	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestConn
+	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestDisConn
+
+test-ping:
+	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestPing
+
+test-pub:
+	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestPub
+
+test-sub:
+	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestSub
+	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestUnSub
+
 .PHONY: all-lib c-lib java-lib py-lib \
 		clean-c-lib clean-java-lib clean-py-lib
 

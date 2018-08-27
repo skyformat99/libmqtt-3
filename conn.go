@@ -16,6 +16,8 @@
 
 package libmqtt
 
+import "bytes"
+
 // ConnPacket is the first packet sent by Client to Server
 type ConnPacket struct {
 	BasePacket
@@ -46,7 +48,58 @@ func (c *ConnPacket) Type() CtrlType {
 }
 
 func (c *ConnPacket) Bytes() []byte {
-	return c.bytes(c)
+	if c == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	c.WriteTo(w)
+	return w.Bytes()
+}
+
+func (c *ConnPacket) WriteTo(w BufferedWriter) error {
+	if c == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch c.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlConn << 4))
+		payload := c.payload()
+		if err := writeVarInt(len(payload)+10, w); err != nil {
+			return err
+		}
+		w.Write(mqtt)
+		w.WriteByte(byte(V311))
+		w.WriteByte(c.flags())
+		w.WriteByte(byte(c.Keepalive >> 8))
+		w.WriteByte(byte(c.Keepalive))
+		_, err := w.Write(payload)
+		return err
+	case V5:
+		w.WriteByte(byte(CtrlConn << 4))
+
+		props := c.Props.props()
+		propLen := len(props)
+		payload := c.payload()
+
+		if err := writeVarInt(len(payload)+propLen+10, w); err != nil {
+			return err
+		}
+		w.Write(mqtt)
+		w.WriteByte(byte(V5))
+		w.WriteByte(c.flags())
+		w.WriteByte(byte(c.Keepalive >> 8))
+		w.WriteByte(byte(c.Keepalive))
+
+		writeVarInt(propLen, w)
+		w.Write(props)
+
+		_, err := w.Write(payload)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 func (c *ConnPacket) flags() byte {
@@ -265,7 +318,45 @@ func (c *ConnAckPacket) Type() CtrlType {
 }
 
 func (c *ConnAckPacket) Bytes() []byte {
-	return c.bytes(c)
+	if c == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	c.WriteTo(w)
+	return w.Bytes()
+}
+
+func (c *ConnAckPacket) WriteTo(w BufferedWriter) error {
+	if c == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch c.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlConnAck << 4))
+		w.WriteByte(2)
+		w.WriteByte(boolToByte(c.Present))
+		return w.WriteByte(c.Code)
+	case V5:
+		w.WriteByte(byte(CtrlConnAck << 4))
+
+		props := c.Props.props()
+		propLen := len(props)
+
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(boolToByte(c.Present))
+		w.WriteByte(c.Code)
+
+		writeVarInt(propLen, w)
+		_, err := w.Write(props)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // ConnAckProps defines connect acknowledge properties
@@ -518,7 +609,42 @@ func (d *DisConnPacket) Type() CtrlType {
 }
 
 func (d *DisConnPacket) Bytes() []byte {
-	return d.bytes(d)
+	if d == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	d.WriteTo(w)
+	return w.Bytes()
+}
+
+func (d *DisConnPacket) WriteTo(w BufferedWriter) error {
+	if d == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch d.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlDisConn << 4))
+		return w.WriteByte(0x00)
+	case V5:
+		w.WriteByte(byte(CtrlDisConn << 4))
+		props := d.Props.props()
+
+		tmpBuf := &bytes.Buffer{}
+		writeVarInt(len(props), tmpBuf)
+
+		if err := writeVarInt(len(props)+1+tmpBuf.Len(), w); err != nil {
+			return err
+		}
+
+		w.WriteByte(d.Code)
+		tmpBuf.WriteTo(w)
+		_, err := w.Write(props)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // DisConnProps properties for DisConnPacket

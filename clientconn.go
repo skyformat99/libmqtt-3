@@ -248,7 +248,7 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := Encode(pkt, c.connRW); err != nil {
+			if err := pkt.WriteTo(c.connRW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}
@@ -275,7 +275,7 @@ func (c *clientConn) handleSend() {
 				return
 			}
 
-			if err := Encode(pkt, c.connRW); err != nil {
+			if err := pkt.WriteTo(c.connRW); err != nil {
 				c.parent.log.e("NET encode error", err)
 				return
 			}

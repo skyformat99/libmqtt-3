@@ -37,7 +37,46 @@ func (p *PublishPacket) Type() CtrlType {
 }
 
 func (p *PublishPacket) Bytes() []byte {
-	return p.bytes(p)
+	if p == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	p.WriteTo(w)
+	return w.Bytes()
+}
+
+func (p *PublishPacket) WriteTo(w BufferedWriter) error {
+	if p == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch p.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlPublish<<4) | boolToByte(p.IsDup)<<3 | boolToByte(p.IsRetain) | p.Qos<<1)
+		payload := p.payload()
+		writeVarInt(len(payload), w)
+		_, err := w.Write(payload)
+		return err
+	case V5:
+		w.WriteByte(byte(CtrlPublish<<4) | boolToByte(p.IsDup)<<3 | boolToByte(p.IsRetain) | p.Qos<<1)
+
+		props := p.Props.props()
+		propLen := len(props)
+		payload := p.payload()
+
+		if err := writeVarInt(len(payload)+propLen, w); err != nil {
+			return err
+		}
+
+		writeVarInt(propLen, w)
+		w.Write(props)
+
+		_, err := w.Write(payload)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 func (p *PublishPacket) payload() []byte {
@@ -199,7 +238,45 @@ func (p *PubAckPacket) Type() CtrlType {
 }
 
 func (p *PubAckPacket) Bytes() []byte {
-	return p.bytes(p)
+	if p == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	p.WriteTo(w)
+	return w.Bytes()
+}
+
+func (p *PubAckPacket) WriteTo(w BufferedWriter) error {
+	if p == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch p.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlPubAck << 4))
+		w.WriteByte(2)
+		w.WriteByte(byte(p.PacketID >> 8))
+		return w.WriteByte(byte(p.PacketID))
+	case V5:
+		w.WriteByte(byte(CtrlPubAck << 4))
+
+		props := p.Props.props()
+		propLen := len(props)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(byte(p.PacketID >> 8))
+		w.WriteByte(byte(p.PacketID))
+
+		writeVarInt(propLen, w)
+		_, err := w.Write(props)
+
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // PubAckProps properties for PubAckPacket
@@ -257,7 +334,45 @@ func (p *PubRecvPacket) Type() CtrlType {
 }
 
 func (p *PubRecvPacket) Bytes() []byte {
-	return p.bytes(p)
+	if p == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	p.WriteTo(w)
+	return w.Bytes()
+}
+
+func (p *PubRecvPacket) WriteTo(w BufferedWriter) error {
+	if p == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch p.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlPubRecv << 4))
+		w.WriteByte(2)
+		w.WriteByte(byte(p.PacketID >> 8))
+		return w.WriteByte(byte(p.PacketID))
+	case V5:
+		w.WriteByte(byte(CtrlPubRecv << 4))
+
+		props := p.Props.props()
+		propLen := len(props)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(byte(p.PacketID >> 8))
+		w.WriteByte(byte(p.PacketID))
+
+		writeVarInt(propLen, w)
+		_, err := w.Write(props)
+
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // PubRecvProps properties for PubRecvPacket
@@ -314,7 +429,45 @@ func (p *PubRelPacket) Type() CtrlType {
 }
 
 func (p *PubRelPacket) Bytes() []byte {
-	return p.bytes(p)
+	if p == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	p.WriteTo(w)
+	return w.Bytes()
+}
+
+func (p *PubRelPacket) WriteTo(w BufferedWriter) error {
+	if p == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch p.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlPubRel<<4 | 0x02))
+		w.WriteByte(2)
+		w.WriteByte(byte(p.PacketID >> 8))
+		return w.WriteByte(byte(p.PacketID))
+	case V5:
+		w.WriteByte(byte(CtrlPubRel<<4 | 0x02))
+
+		props := p.Props.props()
+		propLen := len(props)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(byte(p.PacketID >> 8))
+		w.WriteByte(byte(p.PacketID))
+
+		writeVarInt(propLen, w)
+		_, err := w.Write(props)
+
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // PubRelProps properties for PubRelPacket
@@ -372,7 +525,45 @@ func (p *PubCompPacket) Type() CtrlType {
 }
 
 func (p *PubCompPacket) Bytes() []byte {
-	return p.bytes(p)
+	if p == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	p.WriteTo(w)
+	return w.Bytes()
+}
+
+func (p *PubCompPacket) WriteTo(w BufferedWriter) error {
+	if p == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch p.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlPubComp << 4))
+		w.WriteByte(2)
+		w.WriteByte(byte(p.PacketID >> 8))
+		return w.WriteByte(byte(p.PacketID))
+	case V5:
+		w.WriteByte(byte(CtrlPubComp << 4))
+
+		props := p.Props.props()
+		propLen := len(props)
+		if err := writeVarInt(propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(byte(p.PacketID >> 8))
+		w.WriteByte(byte(p.PacketID))
+
+		writeVarInt(propLen, w)
+		_, err := w.Write(props)
+
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // PubCompProps properties for PubCompPacket

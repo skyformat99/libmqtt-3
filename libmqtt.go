@@ -16,10 +16,6 @@
 
 package libmqtt
 
-import (
-	"bytes"
-)
-
 // UserProps contains user defined properties
 type UserProps map[string][]string
 
@@ -42,6 +38,9 @@ type Packet interface {
 	// Bytes encode packet to bytes
 	Bytes() []byte
 
+	// Write bytes to the buffered writer
+	WriteTo(w BufferedWriter) error
+
 	// Version MQTT version of the packet
 	Version() ProtoVersion
 }
@@ -49,19 +48,6 @@ type Packet interface {
 // BasePacket for packet encoding and MQTT version note
 type BasePacket struct {
 	ProtoVersion ProtoVersion
-}
-
-func (*BasePacket) bytes(p Packet) []byte {
-	if p == nil {
-		return nil
-	}
-
-	buf := &bytes.Buffer{}
-	if Encode(p, buf) != nil {
-		return nil
-	}
-
-	return buf.Bytes()
 }
 
 // Version is the MQTT version of this packet

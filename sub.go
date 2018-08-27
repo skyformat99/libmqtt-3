@@ -39,7 +39,53 @@ func (s *SubscribePacket) Type() CtrlType {
 }
 
 func (s *SubscribePacket) Bytes() []byte {
-	return s.bytes(s)
+	if s == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	s.WriteTo(w)
+	return w.Bytes()
+}
+
+func (s *SubscribePacket) WriteTo(w BufferedWriter) error {
+	if s == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch s.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlSubscribe<<4 | 0x02))
+		payload := s.payload()
+		if err := writeVarInt(len(payload)+2, w); err != nil {
+			return err
+		}
+		w.WriteByte(byte(s.PacketID >> 8))
+		w.WriteByte(byte(s.PacketID))
+		_, err := w.Write(payload)
+		return err
+	case V5:
+		w.WriteByte(byte(CtrlSubscribe<<4 | 0x02))
+
+		props := s.Props.props()
+		payload := s.payload()
+		propLen := len(props)
+
+		if err := writeVarInt(len(payload)+propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(byte(s.PacketID >> 8))
+		w.WriteByte(byte(s.PacketID))
+
+		writeVarInt(propLen, w)
+		w.Write(props)
+
+		_, err := w.Write(payload)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 func (s *SubscribePacket) payload() []byte {
@@ -115,7 +161,53 @@ func (s *SubAckPacket) Type() CtrlType {
 }
 
 func (s *SubAckPacket) Bytes() []byte {
-	return s.bytes(s)
+	if s == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	s.WriteTo(w)
+	return w.Bytes()
+}
+
+func (s *SubAckPacket) WriteTo(w BufferedWriter) error {
+	if s == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch s.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlSubAck << 4))
+		payload := s.payload()
+		if err := writeVarInt(len(payload)+2, w); err != nil {
+			return err
+		}
+		w.WriteByte(byte(s.PacketID >> 8))
+		w.WriteByte(byte(s.PacketID))
+		_, err := w.Write(payload)
+		return err
+	case V5:
+		w.WriteByte(byte(CtrlSubAck << 4))
+
+		props := s.Props.props()
+		payload := s.payload()
+		propLen := len(props)
+
+		if err := writeVarInt(len(payload)+propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(byte(s.PacketID >> 8))
+		w.WriteByte(byte(s.PacketID))
+
+		writeVarInt(propLen, w)
+		w.Write(props)
+
+		_, err := w.Write(payload)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 func (s *SubAckPacket) payload() []byte {
@@ -175,8 +267,54 @@ type UnSubPacket struct {
 func (s *UnSubPacket) Type() CtrlType {
 	return CtrlUnSub
 }
+
 func (s *UnSubPacket) Bytes() []byte {
-	return s.bytes(s)
+	if s == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	s.WriteTo(w)
+	return w.Bytes()
+}
+
+func (s *UnSubPacket) WriteTo(w BufferedWriter) error {
+	if s == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch s.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlUnSub<<4 | 0x02))
+		payload := s.payload()
+		if err := writeVarInt(len(payload)+2, w); err != nil {
+			return err
+		}
+		w.WriteByte(byte(s.PacketID >> 8))
+		w.WriteByte(byte(s.PacketID))
+		_, err := w.Write(payload)
+		return err
+	case V5:
+		w.WriteByte(byte(CtrlUnSub<<4 | 0x02))
+		props := s.Props.props()
+		payload := s.payload()
+		propLen := len(props)
+
+		if err := writeVarInt(len(payload)+propLen+2, w); err != nil {
+			return err
+		}
+
+		w.WriteByte(byte(s.PacketID >> 8))
+		w.WriteByte(byte(s.PacketID))
+
+		writeVarInt(propLen, w)
+		w.Write(props)
+
+		_, err := w.Write(payload)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 func (s *UnSubPacket) payload() []byte {
@@ -230,7 +368,39 @@ func (s *UnSubAckPacket) Type() CtrlType {
 }
 
 func (s *UnSubAckPacket) Bytes() []byte {
-	return s.bytes(s)
+	if s == nil {
+		return nil
+	}
+
+	w := &bytes.Buffer{}
+	s.WriteTo(w)
+	return w.Bytes()
+}
+
+func (s *UnSubAckPacket) WriteTo(w BufferedWriter) error {
+	if s == nil {
+		return ErrEncodeBadPacket
+	}
+
+	switch s.ProtoVersion {
+	case 0, V311:
+		w.WriteByte(byte(CtrlUnSubAck << 4))
+		w.WriteByte(0x02)
+		w.WriteByte(byte(s.PacketID >> 8))
+		return w.WriteByte(byte(s.PacketID))
+	case V5:
+		w.WriteByte(byte(CtrlUnSubAck << 4))
+		w.WriteByte(0x02)
+		w.WriteByte(byte(s.PacketID >> 8))
+		w.WriteByte(byte(s.PacketID))
+
+		props := s.Props.props()
+		writeVarInt(len(props), w)
+		_, err := w.Write(props)
+		return err
+	default:
+		return ErrUnsupportedVersion
+	}
 }
 
 // UnSubAckProps properties for UnSubAckPacket

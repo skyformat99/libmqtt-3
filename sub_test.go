@@ -105,26 +105,34 @@ func initTestData_Sub() {
 
 func TestSubscribePacket_Bytes(t *testing.T) {
 	for i, p := range testSubMsgs {
-		testV311Bytes(p, testSubMsgBytesV311[i], t)
-		// testV5Bytes(p, testSubMsgBytesV5[i], t)
+		p.ProtoVersion = V311
+		testPacketBytes(p, testSubMsgBytesV311[i], t)
+		// p.ProtoVersion = V5
+		// testPacketBytes(p, testSubMsgBytesV5[i], t)
 	}
 }
 
 func TestSubAckPacket_Bytes(t *testing.T) {
 	for i, p := range testSubAckMsgs {
-		testV311Bytes(p, testSubAckMsgBytesV311[i], t)
-		// testV5Bytes(p, testSubAckMsgBytesV5[i], t)
+		p.ProtoVersion = V311
+		testPacketBytes(p, testSubAckMsgBytesV311[i], t)
+		// p.ProtoVersion = V5
+		// testPacketBytes(p, testSubAckMsgBytesV5[i], t)
 	}
 }
 
 func TestUnSubPacket_Bytes(t *testing.T) {
 	for i, p := range testUnSubMsgs {
-		testV311Bytes(p, testUnSubMsgBytesV311[i], t)
-		// testV5Bytes(p, testUnSubMsgBytesV5[i], t)
+		p.ProtoVersion = V311
+		testPacketBytes(p, testUnSubMsgBytesV311[i], t)
+		// p.ProtoVersion = V5
+		// testPacketBytes(p, testUnSubMsgBytesV5[i], t)
 	}
 }
 
 func TestUnSubAckPacket_Bytes(t *testing.T) {
-	testV311Bytes(testUnSubAckMsg, testUnSubAckMsgBytesV311, t)
-	// testV5Bytes(testUnSubAckMsg, testUnSubAckMsgBytesV5, t)
+	testUnSubAckMsg.ProtoVersion = V311
+	testPacketBytes(testUnSubAckMsg, testUnSubAckMsgBytesV311, t)
+	// testUnSubAckMsg.ProtoVersion = V5
+	// testPacketBytes(testUnSubAckMsg, testUnSubAckMsgBytesV5, t)
 }

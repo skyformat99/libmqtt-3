@@ -68,7 +68,8 @@ func initTestData_Auth() {
 }
 
 func TestAuthPacket_Bytes(t *testing.T) {
-	testV5Bytes(testAuthMsg, testAuthMsgBytes, t)
+	testAuthMsg.ProtoVersion = V5
+	testPacketBytes(testAuthMsg, testAuthMsgBytes, t)
 }
 
 func TestAuthProps_Props(t *testing.T) {

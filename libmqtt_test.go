@@ -48,27 +48,8 @@ var (
 	testTopicMsgs   = []string{"test data qos0", "foo data qos1", "bar data qos2"}
 )
 
-func testV311Bytes(pkt Packet, target []byte, t *testing.T) {
-	buf := &bytes.Buffer{}
-	err := encodeV311Packet(pkt, buf)
-	if err != nil {
-		t.Errorf("failed encode v311 packet: %v", err)
-	}
-
-	data := buf.Bytes()
-	if bytes.Compare(data, target) != 0 {
-		t.Errorf("packet mismatch\nGenerated:%v\nTarget:%v", data, target)
-	}
-}
-
-func testV5Bytes(pkt Packet, target []byte, t *testing.T) {
-	buf := &bytes.Buffer{}
-	err := encodeV5Packet(pkt, buf)
-	if err != nil {
-		t.Errorf("failed encode v5 packet: %v", err)
-	}
-
-	data := buf.Bytes()
+func testPacketBytes(pkt Packet, target []byte, t *testing.T) {
+	data := pkt.Bytes()
 	if bytes.Compare(data, target) != 0 {
 		t.Errorf("packet mismatch\nGenerated:%v\nTarget:%v", data, target)
 	}
