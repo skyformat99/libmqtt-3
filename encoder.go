@@ -374,7 +374,7 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 			return err
 		}
 
-		w.WriteByte(a.Code)
+		w.WriteByte(d.Code)
 		tmpBuf.WriteTo(w)
 		_, err := w.Write(props)
 		return err
