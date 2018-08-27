@@ -17,6 +17,9 @@
 test:
 	go test -v -run=. -count=1 -race -coverprofile=coverage.txt -covermode=atomic
 
+test-auth:
+	go test -v -count=1 -race -coverprofile=coverage.txt -covermode=atomic -run=TestAuth
+
 .PHONY: all-lib c-lib java-lib py-lib \
 		clean-c-lib clean-java-lib clean-py-lib
 

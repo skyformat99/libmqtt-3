@@ -23,7 +23,7 @@ import (
 // UserProps contains user defined properties
 type UserProps map[string][]string
 
-func (u UserProps) encodeTo(result []byte) {
+func (u UserProps) encodeTo(result []byte) []byte {
 	for k, v := range u {
 		for _, val := range v {
 			result = append(result, propKeyUserProps)
@@ -31,6 +31,7 @@ func (u UserProps) encodeTo(result []byte) {
 			result = append(result, encodeStringWithLen(val)...)
 		}
 	}
+	return result
 }
 
 // Packet is MQTT control packet
@@ -69,6 +70,7 @@ func (b *BasePacket) Version() ProtoVersion {
 		return b.ProtoVersion
 	}
 
+	// default version is MQTT 3.1.1
 	return V311
 }
 

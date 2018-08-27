@@ -68,7 +68,7 @@ func (a *AuthProps) props() []byte {
 	}
 
 	if a.UserProps != nil {
-		a.UserProps.encodeTo(result)
+		result = a.UserProps.encodeTo(result)
 	}
 
 	return result

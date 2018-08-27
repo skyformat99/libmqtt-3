@@ -17,6 +17,7 @@
 package libmqtt
 
 import (
+	"bytes"
 	"errors"
 )
 
@@ -366,23 +367,31 @@ func encodeV5Packet(pkt Packet, w BufferedWriter) error {
 		w.WriteByte(byte(CtrlDisConn << 4))
 		props := d.Props.props()
 
-		if err := writeVarInt(len(props)+1, w); err != nil {
+		tmpBuf := &bytes.Buffer{}
+		writeVarInt(len(props), tmpBuf)
+
+		if err := writeVarInt(len(props)+1+tmpBuf.Len(), w); err != nil {
 			return err
 		}
-		w.WriteByte(d.Code)
-		writeVarInt(len(props), w)
+
+		w.WriteByte(a.Code)
+		tmpBuf.WriteTo(w)
 		_, err := w.Write(props)
 		return err
 	case *AuthPacket:
 		a := pkt.(*AuthPacket)
 		w.WriteByte(byte(CtrlAuth << 4))
 		props := a.Props.props()
-		if err := writeVarInt(len(props)+1, w); err != nil {
+
+		tmpBuf := &bytes.Buffer{}
+		writeVarInt(len(props), tmpBuf)
+
+		if err := writeVarInt(len(props)+1+tmpBuf.Len(), w); err != nil {
 			return err
 		}
 
 		w.WriteByte(a.Code)
-		writeVarInt(len(props), w)
+		tmpBuf.WriteTo(w)
 		_, err := w.Write(props)
 		return err
 	}

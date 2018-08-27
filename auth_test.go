@@ -17,75 +17,93 @@
 package libmqtt
 
 import (
+	"bytes"
 	"testing"
 )
 
-const (
-	testAuthMethod = "test auth method"
-	testAuthData   = "test auth data"
-	testAuthReason = "test auth reason"
-)
-
 var (
-	testAuthMsg      = &AuthPacket{}
-	testAuthMsgBytes = []byte{}
+	testAuthMsg = &AuthPacket{
+		BasePacket: BasePacket{ProtoVersion: V5},
+		Code:       CodeContinueAuth,
+		Props: &AuthProps{
+			AuthMethod: "MQTT",
+			AuthData:   []byte("MQTT"),
+			Reason:     "MQTT",
+			UserProps: UserProps{
+				"MQ": []string{"TT"},
+			},
+		},
+	}
+	testAuthMsgBytes []byte
 
-	testAuthProps = &AuthProps{
-		AuthMethod: testAuthMethod,
-		AuthData:   []byte(testAuthData),
-		Reason:     testAuthReason,
-		UserProps:  UserProps{"1": []string{"1_1", "1_2"}, "2": []string{"2_1", "2_2"}},
-	}
 	testProps = map[byte][]byte{
-		propKeyAuthMethod:   []byte(testAuthMethod),
-		propKeyAuthData:     []byte(testAuthData),
-		propKeyReasonString: []byte(testAuthReason),
-		propKeyUserProps:    []byte{},
+		propKeyAuthMethod:   []byte{0, 4, 'M', 'Q', 'T', 'T'},
+		propKeyAuthData:     []byte{0, 4, 'M', 'Q', 'T', 'T'},
+		propKeyReasonString: []byte{0, 4, 'M', 'Q', 'T', 'T'},
+		propKeyUserProps: []byte{
+			0, 2, 'M', 'Q', 0, 2, 'T', 'T',
+		},
 	}
-	testAuthPropsBytes = []byte{}
+
+	testAuthPropsBytes = []byte{
+		propKeyAuthMethod, 0, 4, 'M', 'Q', 'T', 'T',
+		propKeyAuthData, 0, 4, 'M', 'Q', 'T', 'T',
+		propKeyReasonString, 0, 4, 'M', 'Q', 'T', 'T',
+		propKeyUserProps, 0, 2, 'M', 'Q', 0, 2, 'T', 'T',
+	}
 )
 
 func initTestData_Auth() {
+	buf := &bytes.Buffer{}
+	buf.Write([]byte{0xF0}) // fixed header
+	varHeader := []byte{CodeContinueAuth}
 
+	tmpBuf := &bytes.Buffer{}
+	writeVarInt(len(testAuthPropsBytes), tmpBuf)
+	varHeader = append(varHeader, tmpBuf.Bytes()...)
+	varHeader = append(varHeader, testAuthPropsBytes...)
+	writeVarInt(len(varHeader), buf)
+	buf.Write(varHeader)
+	testAuthMsgBytes = buf.Bytes()
 }
 
 func TestAuthPacket_Bytes(t *testing.T) {
-	// testV5Bytes(testAuthMsg, testAuthMsgBytes, t)
+	testV5Bytes(testAuthMsg, testAuthMsgBytes, t)
 }
 
 func TestAuthProps_Props(t *testing.T) {
-	// propsBytes := testAuthProps.props()
-	// if bytes.Compare(propsBytes, testAuthPropsBytes) != 0 {
-	// t.Errorf("auth props bytes not math:\ntarget: %v\ngenerated: %v", testAuthPropsBytes, propsBytes)
-	// }
+	propsBytes := testAuthMsg.Props.props()
+	if bytes.Compare(propsBytes, testAuthPropsBytes) != 0 {
+		t.Errorf("auth props bytes not math:\ntarget: %v\ngenerated: %v", testAuthPropsBytes, propsBytes)
+	}
 }
 
 func TestAuthProps_SetProps(t *testing.T) {
-	// emptyProps := &AuthProps{}
-	// emptyProps.setProps(testProps)
+	emptyProps := &AuthProps{}
+	emptyProps.setProps(testProps)
 
-	// if emptyProps.AuthMethod != testAuthProps.AuthMethod {
-	// 	t.Error("auth method set failed")
-	// }
+	if emptyProps.AuthMethod != testAuthMsg.Props.AuthMethod {
+		t.Error("auth method set failed")
+	}
 
-	// if bytes.Compare(emptyProps.AuthData, testAuthProps.AuthData) != 0 {
-	// 	t.Error("auth data set failed")
-	// }
+	if bytes.Compare(emptyProps.AuthData, testAuthMsg.Props.AuthData) != 0 {
+		t.Error("auth data set failed")
+	}
 
-	// if emptyProps.Reason != testAuthProps.Reason {
-	// 	t.Error("auth reason set failed")
-	// }
+	if emptyProps.Reason != testAuthMsg.Props.Reason {
+		t.Error("auth reason set failed")
+	}
 
-	// for k, v := range emptyProps.UserProps {
-	// 	if tv, ok := testAuthProps.UserProps[k]; ok {
-	// 		if len(v) == len(tv) {
-	// 			for i := range v {
-	// 				if v[i] != tv[i] {
-	// 					t.Error("auth user props set failed")
-	// 				}
-	// 			}
-	// 			continue
-	// 		}
-	// 	}
-	// }
+	for k, v := range emptyProps.UserProps {
+		if tv, ok := testAuthMsg.Props.UserProps[k]; ok {
+			if len(v) == len(tv) {
+				for i := range v {
+					if v[i] != tv[i] {
+						t.Error("auth user props set failed")
+					}
+				}
+				continue
+			}
+		}
+	}
 }
