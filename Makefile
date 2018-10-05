@@ -14,6 +14,9 @@
 
 .PHONY: test lib client clean fuzz-test
 
+test-reconnect:
+	go test -v -tags offline -run=TestClient_Reconnect -count=1 -race
+
 test:
 	go test -v -run=. -count=1 -race -coverprofile=coverage.txt -covermode=atomic
 
