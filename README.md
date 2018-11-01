@@ -41,51 +41,56 @@ This package can be used as
 
 #### Steps
 
-1. Go get this project
+**TL;DR:** You can find a full example at [examples/client.go](./examples/client.go)
+
+1.Go get this project
 
 ```bash
 go get github.com/goiiot/libmqtt
 ```
 
-2. Import this package in your project file
+2.Import this package in your project file
 
 ```go
 import "github.com/goiiot/libmqtt"
 ```
 
-3. Create a custom client
+3.Create a custom client
 
 ```go
+// Create a client and enable auto reconnect when connection lost
+// We primarily use `RegexRouter` for client
 client, err := libmqtt.NewClient(
     // server address(es)
     libmqtt.WithServer("localhost:1883"),
+    // enable keepalive (10s interval) with 20% tolerance
+    libmqtt.WithKeepalive(10, 1.2),
+    // enable auto reconnect and set backoff strategy
+    libmqtt.WithAutoReconnect(true),
+    libmqtt.WithBackoffStrategy(time.Second, 5*time.Second, 1.2),
+    // use RegexRouter for topic routing if not specified
+    // will use TextRouter, which will match full text
+    libmqtt.WithRouter(libmqtt.NewRegexRouter()),
 )
+
 if err != nil {
     // handle client creation error
+    panic("create mqtt client failed")
 }
 ```
 
 __Notice__: If you would like to explore all the options available, please refer to [GoDoc#Option](https://godoc.org/github.com/goiiot/libmqtt#Option)
 
-4. Register the handlers and Connect, then you are ready to pub/sub with server
+4.Register the handlers and Connect, then you are ready to pub/sub with server
 
-We recommend you to register handlers for pub, sub, unsub, net error and persist error, for they can provide you more controllability of the lifecycle of the client
-
-```go
-// register handler for pub success/fail (optional, but recommended)
-client.HandlePub(PubHandler)
-
-// register handler for sub success/fail (optional, but recommended)
-client.HandleSub(SubHandler)
-
-// register handler for unsub success/fail (optional, but recommended)
-client.HandleUnSub(UnSubHandler)
-
-// register handler for net error (optional, but recommended)
-client.HandleNet(NetHandler)
-
-// register handler for persist error (optional, but recommended)
-client.HandlePersist(PersistHandler)
+<details>
+<summary>Optional, but we recommend to register handlers for pub, sub, unsub, net error and persist error, and you can gain more controllability of the lifecycle of the client</summary>
+<pre><code>
+client.HandlePub(PubHandler) // register handler for pub success/fail (optional, but recommended)
+client.HandleSub(SubHandler) // register handler for sub success/fail (optional, but recommended)
+client.HandleUnSub(UnSubHandler) // register handler for unsub success/fail (optional, but recommended)
+client.HandleNet(NetHandler) // register handler for net error (optional, but recommended)
+client.HandlePersist(PersistHandler) // register handler for persist error (optional, but recommended)
 
 // define your topic handlers like a golang http server
 client.Handle("foo", func(topic string, qos libmqtt.QosLevel, msg []byte) {
@@ -95,7 +100,8 @@ client.Handle("foo", func(topic string, qos libmqtt.QosLevel, msg []byte) {
 client.Handle("bar", func(topic string, qos libmqtt.QosLevel, msg []byte) {
     // handle the topic message
 })
-```
+</code></pre>
+</details>
 
 ```go
 // connect to server
@@ -116,36 +122,26 @@ client.Connect(func(server string, code byte, err error) {
     // start your business logic here or send a signal to your logic to start
 
     // subscribe some topic(s)
-    client.Subscribe(
-        &libmqtt.Topic{Name: "foo"},
-        &libmqtt.Topic{Name: "bar", Qos: libmqtt.Qos1},
-        // ...
-    )
+    client.Subscribe([]*libmqtt.Topic{
+        {Name: "foo"},
+        {Name: "bar", Qos: libmqtt.Qos1},
+    }...)
 
     // publish some topic message(s)
-    client.Publish(
-        &libmqtt.PublishPacket{
-            TopicName: "foo",
-            Qos:       libmqtt.Qos0,
-            Payload:   []byte("foo data"),
-        },
-        &libmqtt.PublishPacket{
-            TopicName: "bar",
-            Qos:       libmqtt.Qos1,
-            Payload:   []byte("bar data"),
-        },
-        // ...
-    )
+    client.Publish([]*libmqtt.PublishPacket{
+        {TopicName: "foo", Payload: []byte("bar"), Qos: libmqtt.Qos0},
+        {TopicName: "bar", Payload: []byte("foo"), Qos: libmqtt.Qos1},
+    }...)
 })
 ```
 
-5. Unsubscribe topic(s)
+5.Unsubscribe topic(s)
 
 ```go
 client.UnSubscribe("foo", "bar")
 ```
 
-6. Destroy the client when you would like to
+6.Destroy the client when you would like to
 
 ```go
 // use true for a immediate disconnect to server
@@ -232,6 +228,8 @@ You can make the benchmark using source code from [benchmark](./benchmark/)
 Helpful extensions for libmqtt (see [extension](./extension/))
 
 ## LICENSE
+
+[![GitHub license](https://img.shields.io/github/license/goiiot/libmqtt.svg)](https://github.com/goiiot/libmqtt/blob/master/LICENSE.txt)
 
 ```text
 Copyright Go-IIoT (https://github.com/goiiot)
