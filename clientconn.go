@@ -324,8 +324,6 @@ func (c *clientConn) handleRecv() {
 				c.parent.log.e("NET connection broken, server =", c.name, "err =", err)
 
 				// TODO send proper net error to net handler
-				//if err != ErrDecodeBadPacket {
-				//}
 
 				// exit client connection
 				c.exit()

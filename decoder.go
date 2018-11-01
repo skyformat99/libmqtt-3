@@ -68,16 +68,16 @@ func Decode(version ProtoVersion, r BufferedReader) (Packet, error) {
 
 	switch version {
 	case V311:
-		return decodeV311Packet(header, body, r)
+		return decodeV311Packet(header, body)
 	case V5:
-		return decodeV5Packet(header, body, r)
+		return decodeV5Packet(header, body)
 	default:
 		return nil, ErrUnsupportedVersion
 	}
 }
 
 // decode mqtt v3.1.1 packets
-func decodeV311Packet(header byte, body []byte, r BufferedReader) (Packet, error) {
+func decodeV311Packet(header byte, body []byte) (Packet, error) {
 	var err error
 	switch header >> 4 {
 	case CtrlConn:
@@ -209,7 +209,7 @@ func decodeV311Packet(header byte, body []byte, r BufferedReader) (Packet, error
 }
 
 // decode mqtt v5 packets
-func decodeV5Packet(header byte, body []byte, r BufferedReader) (Packet, error) {
+func decodeV5Packet(header byte, body []byte) (Packet, error) {
 	var err error
 	switch header >> 4 {
 	case CtrlConn:
