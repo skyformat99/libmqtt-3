@@ -37,7 +37,7 @@ type PubHandler func(topic string, err error)
 type SubHandler func(topics []*Topic, err error)
 
 // UnSubHandler handles the error occurred when publish some message
-type UnSubHandler func(topic []string, err error)
+type UnSubHandler func(topics []string, err error)
 
 // NetHandler handles the error occurred when net broken
 type NetHandler func(server string, err error)
