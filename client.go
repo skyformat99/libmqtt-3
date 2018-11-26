@@ -133,6 +133,16 @@ func WithWill(topic string, qos QosLevel, retain bool, payload []byte) Option {
 	}
 }
 
+// WithSecureServer use server certificate for verification
+// won't apply `WithTLS`, `WithCustomTLS`, `WithTLSReader` options
+// when connecting to these servers
+func WithSecureServer(servers ...string) Option {
+	return func(c *client) error {
+		c.options.secureServers = servers
+		return nil
+	}
+}
+
 // WithServer adds servers as client server
 // Just use `ip:port` or `domain.name:port`, only TCP connection supported for now
 func WithServer(servers ...string) Option {
@@ -179,7 +189,7 @@ func WithTLSReader(certReader, keyReader, caReader io.Reader, serverNameOverride
 	}
 }
 
-// WithTLS for client tls certification
+// WithTLS use client tls certificate for verification
 func WithTLS(certFile, keyFile, caCert, serverNameOverride string, skipVerify bool) Option {
 	return func(c *client) error {
 		b, err := ioutil.ReadFile(caCert)
@@ -347,6 +357,7 @@ type clientOptions struct {
 	sendChanSize    int           // send channel size
 	recvChanSize    int           // recv channel size
 	servers         []string      // server address strings
+	secureServers   []string      // servers with valid tls certificates
 	dialTimeout     time.Duration // dial timeout in second
 	clientID        string        // used by ConnPacket
 	username        string        // used by ConnPacket
@@ -406,7 +417,12 @@ func (c *client) Connect(h ConnHandler) {
 
 	for _, s := range c.options.servers {
 		c.workers.Add(1)
-		go c.connect(s, h, c.options.protoVersion, c.options.firstDelay)
+		go c.connect(s, false, h, c.options.protoVersion, c.options.firstDelay)
+	}
+
+	for _, s := range c.options.secureServers {
+		c.workers.Add(1)
+		go c.connect(s, true, h, c.options.protoVersion, c.options.firstDelay)
 	}
 
 	c.workers.Add(2)
@@ -522,17 +538,24 @@ func (c *client) HandlePersist(h PersistHandler) {
 }
 
 // connect to one server and start mqtt logic
-func (c *client) connect(server string, h ConnHandler, version ProtoVersion, reconnectDelay time.Duration) {
+func (c *client) connect(server string, secure bool, h ConnHandler, version ProtoVersion, reconnectDelay time.Duration) {
 	defer c.workers.Done()
 
-	var conn net.Conn
-	var err error
+	var (
+		conn net.Conn
+		err  error
+	)
 
-	if c.options.tlsConfig != nil {
-		// with tls
-		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: c.options.dialTimeout}, "tcp", server, c.options.tlsConfig)
+	tlsConfig := c.options.tlsConfig
+	if secure {
+		tlsConfig = &tls.Config{}
+	}
+
+	if tlsConfig != nil {
+		// tls with server certificate
+		conn, err = tls.DialWithDialer(&net.Dialer{Timeout: c.options.dialTimeout}, "tcp", server, tlsConfig)
 		if err != nil {
-			c.log.e("CLI connect with tls failed, err =", err, "server =", server)
+			c.log.e("CLI connect with tls failed, err =", err, "server =", server, "secure_server =", secure)
 			if h != nil {
 				go h(server, math.MaxUint8, err)
 			}
@@ -613,7 +636,7 @@ func (c *client) connect(server string, h ConnHandler, version ProtoVersion, rec
 					close(connImpl.logicSendC)
 					if version > V311 && c.options.protoCompromise && p.Code == CodeUnsupportedProtoVersion {
 						c.workers.Add(1)
-						go c.connect(server, h, version-1, reconnectDelay)
+						go c.connect(server, secure, h, version-1, reconnectDelay)
 						return
 					}
 
@@ -664,7 +687,7 @@ reconnect:
 	}
 
 	c.workers.Add(1)
-	go c.connect(server, h, version, reconnectDelay)
+	go c.connect(server, secure, h, version, reconnectDelay)
 }
 
 func (c *client) isClosing() bool {
