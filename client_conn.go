@@ -27,7 +27,7 @@ import (
 // tend to actual packet send and receive
 type clientConn struct {
 	protoVersion ProtoVersion       // mqtt protocol version
-	parent       *client            // client which created this connection
+	parent       Client             // client which created this connection
 	name         string             // server addr info
 	conn         net.Conn           // connection to server
 	connRW       *bufio.ReadWriter  // make buffered connection
