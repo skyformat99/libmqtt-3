@@ -37,7 +37,7 @@ This package can be used as
 
 #### Prerequisite
 
-- Go 1.9+ (with `GOPATH` configured)
+- Go 1.9+
 
 #### Steps
 
@@ -198,28 +198,28 @@ client, err := libmqtt.NewClient(
 Per MQTT Specification, session state should be persisted and be recovered when next time connected to server without clean session flag set, currently we provide persist method as following:
 
 1. `NonePersist` - no session persist
-1. `memPersist` - in memory session persist
-1. `filePersist` - files session persist (with write barrier)
-1. `redisPersist` - redis session persist (available inside [github.com/goiiot/libmqtt/extension](./extension/) package)
+2. `memPersist` - in memory session persist
+3. `filePersist` - files session persist (with write barrier)
+4. `redisPersist` - redis session persist (available inside [github.com/goiiot/libmqtt/extension](./extension/) package)
 
 __Note__: Use `RedisPersist` if possible.
 
 ## Benchmark
 
-The procedure of the benchmark is as following:
+The procedure of the benchmark is:
 
 1. Create the client
-1. Connect to server
-1. Publish N times to topic `foo`
-1. Unsubscribe topic (no subscribe, just ensure all pub message has been sent)
-1. Destroy client (without disconnect packet)
+2. Connect to server
+3. Publish N times to topic `foo`
+4. Unsubscribe topic (just ensure all pub message has been sent)
+5. Destroy client (without disconnect packet)
 
 The benchmark result listed below was taken on a MacBook Pro 13' (Early 2015, macOS 10.13.2), statistics inside which is the value of ten times average
 
-| Bench Name               | Pub Count | ns/op | B/op | allocs/op |
-| ------------------------ | --------- | ----- | ---- | --------- |
-| BenchmarkLibmqttClient-4 | 10000     | 12011 | 405  | 5         |
-| BenchmarkPahoClient-4    | 10000     | 32604 | 1232 | 16        |
+| Bench Name                              | Pub Count | ns/op | B/op | allocs/op |
+| --------------------------------------- | --------- | ----- | ---- | --------- |
+| BenchmarkLibmqttClient-4 (this project) | 100000    | 20187 | 176  | 6         |
+| BenchmarkPahoClient-4    (eclipse paho) | 100000    | 25072 | 816  | 15        |
 
 You can make the benchmark using source code from [benchmark](./benchmark/)
 
