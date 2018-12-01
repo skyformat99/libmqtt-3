@@ -1,6 +1,6 @@
 # github.com/boltdb/bolt v1.3.1
 github.com/boltdb/bolt
-# github.com/coreos/etcd v3.3.9+incompatible
+# github.com/coreos/etcd v3.3.10+incompatible
 github.com/coreos/etcd/clientv3
 github.com/coreos/etcd/auth/authpb
 github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes
@@ -10,7 +10,7 @@ github.com/coreos/etcd/pkg/types
 # github.com/eclipse/paho.mqtt.golang v1.1.1
 github.com/eclipse/paho.mqtt.golang/packets
 github.com/eclipse/paho.mqtt.golang
-# github.com/go-redis/redis v6.14.1+incompatible
+# github.com/go-redis/redis v6.14.2+incompatible
 github.com/go-redis/redis
 github.com/go-redis/redis/internal
 github.com/go-redis/redis/internal/consistenthash
@@ -32,7 +32,7 @@ github.com/golang/protobuf/ptypes/timestamp
 # go.uber.org/goleak v0.10.0
 go.uber.org/goleak
 go.uber.org/goleak/internal/stack
-# golang.org/x/net v0.0.0-20181004194319-68fc911561ed
+# golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
 golang.org/x/net/proxy
 golang.org/x/net/websocket
 golang.org/x/net/context
@@ -43,16 +43,16 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/http/httpguts
 golang.org/x/net/idna
-# golang.org/x/sys v0.0.0-20181004145325-8469e314837c
+# golang.org/x/sys v0.0.0-20181128092732-4ed8d59d0b35
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.0
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/transform
-# google.golang.org/genproto v0.0.0-20181004005441-af9cb2a35e7f
+# google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.15.0
+# google.golang.org/grpc v1.16.0
 google.golang.org/grpc
 google.golang.org/grpc/codes
 google.golang.org/grpc/credentials
