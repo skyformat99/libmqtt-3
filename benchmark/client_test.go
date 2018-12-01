@@ -44,7 +44,8 @@ func BenchmarkLibmqttClient(b *testing.B) {
 		lib.WithServer(testServer),
 		lib.WithKeepalive(testKeepalive, 1.2),
 		lib.WithBuf(testBufSize, testBufSize),
-		lib.WithCleanSession(true))
+		lib.WithCleanSession(true),
+	)
 
 	if err != nil {
 		b.Error(err)
